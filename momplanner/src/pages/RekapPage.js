@@ -15,6 +15,9 @@ export default function RekapPage({ onCancel }) {
   const [res, setRes] = useState(null);
   const [msg, setMsg] = useState("");
 
+  // status animasi hapus
+  const [deletingKey, setDeletingKey] = useState(null); // contoh: "debet-42" / "kredit-7"
+
   // state untuk export PDF
   const [exporting, setExporting] = useState(false);
   const [hoverExportBtn, setHoverExportBtn] = useState(false);
@@ -73,6 +76,8 @@ export default function RekapPage({ onCancel }) {
       padding: "20px",
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     },
+
+    
     header: {
       display: "flex",
       alignItems: "center",
@@ -326,6 +331,9 @@ export default function RekapPage({ onCancel }) {
 
   // Hapus 1 baris (debet/kredit)
 async function handleDelete(type, rowOrId) {
+  const id = typeof rowOrId === "number" ? rowOrId : rowOrId?.id ?? null;
+  const key = `${type}-${id ?? "x"}`;
+  setDeletingKey(key);
   try {
     const isNumber = typeof rowOrId === "number";
     await apiDelete({
@@ -340,10 +348,10 @@ async function handleDelete(type, rowOrId) {
     await reloadSummary();
   } catch (e) {
     window.alert(e.message || "Gagal menghapus baris.");
+  } finally {
+    setDeletingKey(null);
   }
 }
-
-
 
 
   return (
@@ -628,13 +636,38 @@ async function handleDelete(type, rowOrId) {
                               border: "1px solid #fecaca",
                               padding: "4px 8px",
                               borderRadius: 6,
-                              cursor: "pointer",
+                              cursor:
+                                deletingKey === `debet-${r.id}`
+                                  ? "wait"
+                                  : "pointer",
                               fontSize: 12,
                               fontWeight: 600,
+                              opacity:
+                                deletingKey === `debet-${r.id}` ? 0.6 : 1,
+                              transition: "opacity 0.3s ease",
                             }}
                             title="Hapus baris ini"
+                            disabled={deletingKey === `debet-${r.id}`}
                           >
-                            Hapus
+                            {deletingKey === `debet-${r.id}` ? (
+                              <>
+                                <span
+                                  style={{
+                                    display: "inline-block",
+                                    width: "12px",
+                                    height: "12px",
+                                    border: "2px solid #b91c1c",
+                                    borderTopColor: "transparent",
+                                    borderRadius: "50%",
+                                    marginRight: 6,
+                                    animation: "spin 0.8s linear infinite",
+                                  }}
+                                />
+                                Menghapus...
+                              </>
+                            ) : (
+                              "Hapus"
+                            )}
                           </button>
                         </td>
                       </tr>
@@ -785,13 +818,38 @@ async function handleDelete(type, rowOrId) {
                               border: "1px solid #fecaca",
                               padding: "4px 8px",
                               borderRadius: 6,
-                              cursor: "pointer",
+                              cursor:
+                                deletingKey === `kredit-${r.id}`
+                                  ? "wait"
+                                  : "pointer",
                               fontSize: 12,
                               fontWeight: 600,
+                              opacity:
+                                deletingKey === `kredit-${r.id}` ? 0.6 : 1,
+                              transition: "opacity 0.3s ease",
                             }}
                             title="Hapus baris ini"
+                            disabled={deletingKey === `kredit-${r.id}`}
                           >
-                            Hapus
+                            {deletingKey === `kredit-${r.id}` ? (
+                              <>
+                                <span
+                                  style={{
+                                    display: "inline-block",
+                                    width: "12px",
+                                    height: "12px",
+                                    border: "2px solid #b91c1c",
+                                    borderTopColor: "transparent",
+                                    borderRadius: "50%",
+                                    marginRight: 6,
+                                    animation: "spin 0.8s linear infinite",
+                                  }}
+                                />
+                                Menghapus...
+                              </>
+                            ) : (
+                              "Hapus"
+                            )}
                           </button>
                         </td>
                       </tr>
