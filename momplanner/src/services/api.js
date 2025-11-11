@@ -12,9 +12,10 @@ async function postForm(payload) {
 
 export async function apiLogin(username, password) {
   const { user } = await postForm({ mode: "login", username, password });
-  // Sertakan password agar bisa dipakai untuk delete (diambil dari localStorage)
+  // simpan password untuk request delete
   return { ...user, password }; // { username, name, password }
 }
+
 
 
 export async function apiWrite({
@@ -37,7 +38,6 @@ export async function apiWrite({
   });
 }
 
-// Hapus 1 baris transaksi (perlu Apps Script: mode=delete)
 export async function apiDelete({
   type,
   rowIndex,
@@ -48,6 +48,11 @@ export async function apiDelete({
   keterangan,
 }) {
   const auth = JSON.parse(localStorage.getItem("MP_USER") || "{}");
+  if (!auth?.username || !auth?.password) {
+    throw new Error(
+      "Sesi login tidak lengkap. Silakan logout lalu login lagi."
+    );
+  }
   return postForm({
     mode: "delete",
     type,
@@ -57,10 +62,11 @@ export async function apiDelete({
     tanggal,
     uang,
     keterangan,
-    username: auth.username, // ✅ kirim kredensial
-    password: auth.password, // ✅ kirim kredensial
+    username: auth.username, // ✅ wajib
+    password: auth.password, // ✅ wajib
   });
 }
+
 
 
 
