@@ -18,25 +18,25 @@ export async function apiLogin(username, password) {
 
 
 
-export async function apiWrite({
-  type,
-  date,
-  description,
-  amount,
-  user,
-  password,
-}) {
-  await postForm({
+export async function apiWrite({ type, date, description, amount }) {
+  const auth = JSON.parse(localStorage.getItem("MP_USER") || "{}");
+  if (!auth?.username || !auth?.password) {
+    throw new Error(
+      "Sesi login tidak lengkap. Silakan logout lalu login lagi."
+    );
+  }
+  return postForm({
     mode: "write",
-    type,
+    type, // "debet" | "kredit"
     date,
     description,
     amount,
-    username: user.username,
-    name: user.name,
-    password,
+    username: auth.username, // ✅ WAJIB
+    password: auth.password, // ✅ WAJIB
+    name: auth.name || "", // opsional, backend kamu men-support
   });
 }
+
 
 export async function apiDelete({
   type,
