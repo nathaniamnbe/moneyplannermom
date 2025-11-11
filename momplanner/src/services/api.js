@@ -35,6 +35,30 @@ export async function apiWrite({
   });
 }
 
+// Hapus 1 baris transaksi (perlu Apps Script: mode=delete)
+export async function apiDelete({
+  type,
+  rowIndex,
+  year,
+  month,
+  tanggal,
+  uang,
+  keterangan,
+}) {
+  await postForm({
+    mode: "delete",
+    type,
+    rowIndex, // boleh null → backend akan pakai fingerprint
+    year,
+    month,
+    tanggal,
+    uang,
+    keterangan,
+  });
+}
+
+
+
 // 🔽 Tambahan baru: ambil ringkasan debet/kredit per bulan
 export async function apiSummary(year, month) {
   const { data } = await postForm({

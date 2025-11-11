@@ -9,7 +9,8 @@ import RekapPage from "./pages/RekapPage"; // ✅ import halaman rekap
 function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("login");
-  const [transactions, setTransactions] = useState([]);
+const [transactions] = useState([]);
+
 
   useEffect(() => {
     const saved = localStorage.getItem("MP_USER");

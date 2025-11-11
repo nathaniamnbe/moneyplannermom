@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { apiSummary } from "../services/api";
+import { apiSummary, apiDelete } from "../services/api";
+
 
 export default function RekapPage({ onCancel }) {
   const now = new Date();
@@ -11,38 +12,44 @@ export default function RekapPage({ onCancel }) {
   const [hoverCancelBtn, setHoverCancelBtn] = useState(false);
   const [hoverSubmitBtn, setHoverSubmitBtn] = useState(false);
 
-const [res, setRes] = useState(null);
-const [msg, setMsg] = useState("");
+  const [res, setRes] = useState(null);
+  const [msg, setMsg] = useState("");
 
-// state untuk export PDF
-const [exporting, setExporting] = useState(false);
-const [hoverExportBtn, setHoverExportBtn] = useState(false);
+  // state untuk export PDF
+  const [exporting, setExporting] = useState(false);
+  const [hoverExportBtn, setHoverExportBtn] = useState(false);
 
-// helper format tanggal singkat "Senin, November 2025"
-function fmtTanggalSingkat(tgl) {
-  const d = new Date(tgl);
-  const hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][
-    d.getDay()
-  ];
-  const bulan = [
-    "Januari",
-    "Februari",
-    "Maret",
-    "April",
-    "Mei",
-    "Juni",
-    "Juli",
-    "Agustus",
-    "September",
-    "Oktober",
-    "November",
-    "Desember",
-  ][d.getMonth()];
-  return `${hari}, ${bulan} ${d.getFullYear()}`;
-}
-function fmtRupiah(n) {
-  return `Rp ${Number(n || 0).toLocaleString("id-ID")}`;
-}
+  // helper format tanggal singkat "Senin, November 2025"
+  function fmtTanggalSingkat(tgl) {
+    const d = new Date(tgl);
+    const hari = [
+      "Minggu",
+      "Senin",
+      "Selasa",
+      "Rabu",
+      "Kamis",
+      "Jumat",
+      "Sabtu",
+    ][d.getDay()];
+    const bulan = [
+      "Januari",
+      "Februari",
+      "Maret",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Agustus",
+      "September",
+      "Oktober",
+      "November",
+      "Desember",
+    ][d.getMonth()];
+    return `${hari}, ${bulan} ${d.getFullYear()}`;
+  }
+  function fmtRupiah(n) {
+    return `Rp ${Number(n || 0).toLocaleString("id-ID")}`;
+  }
 
   const months = [
     { v: 1, n: "Januari" },
@@ -198,22 +205,57 @@ function fmtRupiah(n) {
       const margin = 40;
 
       // Header
-      doc.setFontSize(16);
-      doc.text(`Rekap Bulanan ${monthName} ${year}`, margin, 40);
+      // Header
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.setFontSize(18);
+      doc.setFont(undefined, "bold");
+      doc.text(`Rekap Bulanan ${monthName} ${year}`, pageWidth / 2, 40, {
+        align: "center",
+      });
+      doc.setFont(undefined, "normal");
 
-      // Ringkasan
-      doc.setFontSize(11);
-      let y = 70;
-      doc.text(`Total Debet : ${fmtRupiah(res.totalDebet)}`, margin, y);
-      y += 16;
-      doc.text(`Total Kredit: ${fmtRupiah(res.totalKredit)}`, margin, y);
-      y += 16;
-      doc.text(`Selisih     : ${fmtRupiah(res.selisih)}`, margin, y);
-      y += 20;
-
-      // Tabel Debet
+      /** ===== Ringkasan 1×3 (Total Debet / Total Kredit / Selisih) ===== */
+      const summaryHead = [["Total Debet", "Total Kredit", "Selisih"]];
+      const summaryBody = [
+        [
+          fmtRupiah(res.totalDebet),
+          fmtRupiah(res.totalKredit),
+          fmtRupiah(res.selisih),
+        ],
+      ];
       autoTable(doc, {
-        startY: y + 10,
+        startY: 56,
+        margin: { left: margin, right: margin },
+        head: summaryHead,
+        body: summaryBody,
+        theme: "grid",
+        styles: { fontSize: 12, cellPadding: 8 },
+        headStyles: {
+          fontSize: 12,
+          fontStyle: "bold",
+          fillColor: [245, 245, 245],
+          textColor: 20,
+          halign: "center",
+        },
+        bodyStyles: { fontSize: 16, fontStyle: "bold", halign: "center" }, // angka lebih besar & rata tengah
+        columnStyles: {
+          0: { halign: "center" },
+          1: { halign: "center" },
+          2: { halign: "center" },
+        },
+      });
+
+      let currY = (doc.lastAutoTable?.finalY || 80) + 18;
+
+      /** ===== Judul & Tabel Debet ===== */
+      doc.setFontSize(14);
+      doc.setFont(undefined, "bold");
+      doc.text("Tabel Debet", margin, currY);
+      doc.setFont(undefined, "normal");
+      currY += 10;
+
+      autoTable(doc, {
+        startY: currY,
         margin: { left: margin, right: margin },
         head: [["Tanggal", "Keterangan", "Uang (Rp)"]],
         body: (res.debetRows || []).map((r) => [
@@ -221,15 +263,28 @@ function fmtRupiah(n) {
           r.keterangan || "",
           Number(r.uang || 0).toLocaleString("id-ID"),
         ]),
+
+        theme: "grid",
         styles: { fontSize: 10, cellPadding: 4 },
         headStyles: { fillColor: [247, 247, 247], textColor: 20 },
-        theme: "grid",
+        columnStyles: {
+          0: { cellWidth: 170 },
+          1: { cellWidth: "auto" },
+          2: { halign: "right", cellWidth: 100 },
+        },
       });
 
-      // Tabel Kredit
-      const nextY = (doc.lastAutoTable?.finalY || y) + 20;
+      currY = (doc.lastAutoTable?.finalY || currY) + 20;
+
+      /** ===== Judul & Tabel Kredit ===== */
+      doc.setFontSize(14);
+      doc.setFont(undefined, "bold");
+      doc.text("Tabel Kredit", margin, currY);
+      doc.setFont(undefined, "normal");
+      currY += 10;
+
       autoTable(doc, {
-        startY: nextY,
+        startY: currY,
         margin: { left: margin, right: margin },
         head: [["Tanggal", "Keterangan", "Uang (Rp)"]],
         body: (res.kreditRows || []).map((r) => [
@@ -237,18 +292,58 @@ function fmtRupiah(n) {
           r.keterangan || "",
           Number(r.uang || 0).toLocaleString("id-ID"),
         ]),
+        theme: "grid",
         styles: { fontSize: 10, cellPadding: 4 },
         headStyles: { fillColor: [247, 247, 247], textColor: 20 },
-        theme: "grid",
+        columnStyles: {
+          0: { cellWidth: 170 },
+          1: { cellWidth: "auto" },
+          2: { halign: "right", cellWidth: 100 },
+        },
       });
 
       doc.save(`Rekap_${year}_${monthName}.pdf`);
     } catch (err) {
-      alert(`Gagal membuat PDF: ${err.message || err}`);
+      window.alert(`Gagal membuat PDF: ${err.message || err}`);
     } finally {
       setExporting(false);
     }
   }
+
+  // Ambil ulang summary (dipanggil setelah delete)
+  async function reloadSummary() {
+    setLoading(true);
+    setMsg("");
+    try {
+      const data = await apiSummary(year, month);
+      setRes(data);
+    } catch (err) {
+      setMsg(err.message || "Gagal mengambil ringkasan");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Hapus 1 baris (debet/kredit)
+async function handleDelete(type, rowOrId) {
+  try {
+    const isNumber = typeof rowOrId === "number";
+    await apiDelete({
+      type,
+      rowIndex: isNumber ? rowOrId : rowOrId?.id ?? null,
+      year,
+      month,
+      tanggal: isNumber ? null : rowOrId?.tanggal,
+      uang: isNumber ? null : rowOrId?.uang,
+      keterangan: isNumber ? null : rowOrId?.keterangan,
+    });
+    await reloadSummary();
+  } catch (e) {
+    window.alert(e.message || "Gagal menghapus baris.");
+  }
+}
+
+
 
 
   return (
@@ -418,7 +513,7 @@ function fmtRupiah(n) {
                       <th
                         style={{
                           textAlign: "left",
-                          padding: "6px 4px", // padding lebih kecil
+                          padding: "6px 4px",
                           borderBottom: "1px solid #eee",
                           whiteSpace: "nowrap",
                         }}
@@ -444,6 +539,16 @@ function fmtRupiah(n) {
                         }}
                       >
                         Uang (Rp)
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "center",
+                          padding: "6px 4px",
+                          borderBottom: "1px solid #eee",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Aksi
                       </th>
                     </tr>
                   </thead>
@@ -507,11 +612,36 @@ function fmtRupiah(n) {
                         >
                           {Number(r.uang || 0).toLocaleString("id-ID")}
                         </td>
+                        <td
+                          style={{
+                            padding: 10,
+                            borderBottom: "1px solid #f0f0f0",
+                            textAlign: "center",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <button
+                            onClick={() => handleDelete("debet", r)}
+                            style={{
+                              background: "#fef2f2",
+                              color: "#b91c1c",
+                              border: "1px solid #fecaca",
+                              padding: "4px 8px",
+                              borderRadius: 6,
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontWeight: 600,
+                            }}
+                            title="Hapus baris ini"
+                          >
+                            Hapus
+                          </button>
+                        </td>
                       </tr>
                     ))}
                     {(!res.debetRows || res.debetRows.length === 0) && (
                       <tr>
-                        <td colSpan={3} style={{ padding: 10, color: "#666" }}>
+                        <td colSpan={4} style={{ padding: 10, color: "#666" }}>
                           Tidak ada data
                         </td>
                       </tr>
@@ -540,7 +670,7 @@ function fmtRupiah(n) {
                       <th
                         style={{
                           textAlign: "left",
-                          padding: "6px 4px", // padding lebih kecil
+                          padding: "6px 4px",
                           borderBottom: "1px solid #eee",
                           whiteSpace: "nowrap",
                         }}
@@ -566,6 +696,16 @@ function fmtRupiah(n) {
                         }}
                       >
                         Uang (Rp)
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "center",
+                          padding: "6px 4px",
+                          borderBottom: "1px solid #eee",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Aksi
                       </th>
                     </tr>
                   </thead>
@@ -629,11 +769,36 @@ function fmtRupiah(n) {
                         >
                           {Number(r.uang || 0).toLocaleString("id-ID")}
                         </td>
+                        <td
+                          style={{
+                            padding: 10,
+                            borderBottom: "1px solid #f0f0f0",
+                            textAlign: "center",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <button
+                            onClick={() => handleDelete("kredit", r)}
+                            style={{
+                              background: "#fef2f2",
+                              color: "#b91c1c",
+                              border: "1px solid #fecaca",
+                              padding: "4px 8px",
+                              borderRadius: 6,
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontWeight: 600,
+                            }}
+                            title="Hapus baris ini"
+                          >
+                            Hapus
+                          </button>
+                        </td>
                       </tr>
                     ))}
                     {(!res.kreditRows || res.kreditRows.length === 0) && (
                       <tr>
-                        <td colSpan={3} style={{ padding: 10, color: "#666" }}>
+                        <td colSpan={4} style={{ padding: 10, color: "#666" }}>
                           Tidak ada data
                         </td>
                       </tr>
