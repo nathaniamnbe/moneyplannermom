@@ -4,30 +4,20 @@ import "./App.css";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import DebetPage from "./pages/DebetPage";
-import RekapPage from "./pages/RekapPage";
+import RekapPage from "./pages/RekapPage"; // ✅ import halaman rekap
 
 function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("login");
-  const [transactions, setTransactions] = useState([]);
+const [transactions] = useState([]);
 
-  // load user & history
+
   useEffect(() => {
-    const savedUser = localStorage.getItem("MP_USER");
-    if (savedUser) setUser(JSON.parse(savedUser));
-
-    const savedHist = localStorage.getItem("MP_HISTORY");
-    if (savedHist) {
-      try {
-        setTransactions(JSON.parse(savedHist));
-      } catch {}
-    }
+    const saved = localStorage.getItem("MP_USER");
+    if (saved) setUser(JSON.parse(saved));
   }, []);
 
-  const persistHistory = (next) => {
-    setTransactions(next);
-    localStorage.setItem("MP_HISTORY", JSON.stringify(next));
-  };
+  if (!user) return <LoginPage setUser={setUser} />;
 
   const handleLogout = () => {
     setUser(null);
@@ -35,13 +25,10 @@ function App() {
     setPage("login");
   };
 
-  // Router sederhana
-  if (!user) return <LoginPage setUser={setUser} />;
-
+  // === DASHBOARD ===
   if (page === "dashboard") {
     return (
       <DashboardPage
-        user={user}
         transactions={transactions}
         onNavigate={setPage}
         onLogout={handleLogout}
@@ -49,29 +36,38 @@ function App() {
     );
   }
 
-  if (page === "debet" || page === "kredit") {
+  // === INPUT DEBET ===
+  if (page === "debet") {
     return (
       <DebetPage
         user={user}
-        type={page} // "debet" | "kredit"
+        type="debet"
         onCancel={() => setPage("dashboard")}
-        onDone={(newTx) => {
-          // newTx: {type, date, description, amount}
-          const next = [newTx, ...transactions];
-          persistHistory(next);
-          setPage("dashboard");
-        }}
+        onDone={() => setPage("dashboard")}
       />
     );
   }
 
+  // === INPUT KREDIT ===
+  if (page === "kredit") {
+    return (
+      <DebetPage
+        user={user}
+        type="kredit"
+        onCancel={() => setPage("dashboard")}
+        onDone={() => setPage("dashboard")}
+      />
+    );
+  }
+
+  // === REKAP BULANAN ===
   if (page === "rekap") {
     return <RekapPage onCancel={() => setPage("dashboard")} />;
   }
 
+  // Default fallback ke dashboard
   return (
     <DashboardPage
-      user={user}
       transactions={transactions}
       onNavigate={setPage}
       onLogout={handleLogout}
