@@ -171,28 +171,6 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
       </div>
 
       <div style={styles.mainContent}>
-        <div style={styles.summaryGrid}>
-          <div style={styles.card}>
-            <p style={styles.cardLabel}>Total Debet</p>
-            <p style={styles.cardAmount}>
-              Rp {totalDebet.toLocaleString("id-ID")}
-            </p>
-          </div>
-
-          <div style={styles.card}>
-            <p style={styles.cardLabel}>Total Kredit</p>
-            <p style={styles.cardAmount}>
-              Rp {totalKredit.toLocaleString("id-ID")}
-            </p>
-          </div>
-
-          <div style={styles.card}>
-            <p style={styles.cardLabel}>Saldo Bersih</p>
-            <p style={styles.cardAmount}>
-              Rp {netBalance.toLocaleString("id-ID")}
-            </p>
-          </div>
-        </div>
 
         <div style={styles.buttonGrid}>
           <button
