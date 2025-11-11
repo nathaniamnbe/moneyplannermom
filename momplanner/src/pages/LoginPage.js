@@ -122,9 +122,10 @@ function LoginPage({ setUser }) {
       setError("");
       setLoading(true);
       const u = await apiLogin(username, password);
-      const session = { ...u, _pw: password };
-      localStorage.setItem("MP_USER", JSON.stringify(session));
-      setUser(session);
+const session = { ...u, password }; // ubah `_pw` jadi `password`
+localStorage.setItem("MP_USER", JSON.stringify(session));
+setUser(session);
+
     } catch (err) {
       setError(err.message || "Gagal masuk");
     } finally {

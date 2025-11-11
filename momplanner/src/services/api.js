@@ -12,8 +12,10 @@ async function postForm(payload) {
 
 export async function apiLogin(username, password) {
   const { user } = await postForm({ mode: "login", username, password });
-  return user; // { username, name }
+  // Sertakan password agar bisa dipakai untuk delete (diambil dari localStorage)
+  return { ...user, password }; // { username, name, password }
 }
+
 
 export async function apiWrite({
   type,
@@ -45,17 +47,21 @@ export async function apiDelete({
   uang,
   keterangan,
 }) {
-  await postForm({
+  const auth = JSON.parse(localStorage.getItem("MP_USER") || "{}");
+  return postForm({
     mode: "delete",
     type,
-    rowIndex, // boleh null → backend akan pakai fingerprint
+    rowIndex,
     year,
     month,
     tanggal,
     uang,
     keterangan,
+    username: auth.username, // ✅ kirim kredensial
+    password: auth.password, // ✅ kirim kredensial
   });
 }
+
 
 
 
