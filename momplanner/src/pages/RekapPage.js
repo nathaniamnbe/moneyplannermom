@@ -23,8 +23,27 @@ export default function RekapPage({ onCancel }) {
   const [hoverExportBtn, setHoverExportBtn] = useState(false);
 
   // helper format tanggal singkat "Senin, November 2025"
+  // === Parser tanggal aman untuk semua device ===
+  function parseTanggal(str) {
+    if (!str) return null;
+    const s = String(str).trim();
+
+    // yyyy-mm-dd
+    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+
+    // dd/mm/yyyy atau dd-mm-yyyy
+    m = s.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+
+    const d = new Date(s);
+    return isNaN(d) ? null : d;
+  }
+
+  // helper format tanggal singkat "Senin, November 2025"
   function fmtTanggalSingkat(tgl) {
-    const d = new Date(tgl);
+    const d = parseTanggal(tgl);
+    if (!d) return String(tgl || "");
     const hari = [
       "Minggu",
       "Senin",
@@ -50,6 +69,7 @@ export default function RekapPage({ onCancel }) {
     ][d.getMonth()];
     return `${hari}, ${bulan} ${d.getFullYear()}`;
   }
+
   function fmtRupiah(n) {
     return `Rp ${Number(n || 0).toLocaleString("id-ID")}`;
   }
@@ -77,7 +97,6 @@ export default function RekapPage({ onCancel }) {
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     },
 
-    
     header: {
       display: "flex",
       alignItems: "center",
@@ -330,29 +349,28 @@ export default function RekapPage({ onCancel }) {
   }
 
   // Hapus 1 baris (debet/kredit)
-async function handleDelete(type, rowOrId) {
-  const id = typeof rowOrId === "number" ? rowOrId : rowOrId?.id ?? null;
-  const key = `${type}-${id ?? "x"}`;
-  setDeletingKey(key);
-  try {
-    const isNumber = typeof rowOrId === "number";
-    await apiDelete({
-      type,
-      rowIndex: isNumber ? rowOrId : rowOrId?.id ?? null,
-      year,
-      month,
-      tanggal: isNumber ? null : rowOrId?.tanggal,
-      uang: isNumber ? null : rowOrId?.uang,
-      keterangan: isNumber ? null : rowOrId?.keterangan,
-    });
-    await reloadSummary();
-  } catch (e) {
-    window.alert(e.message || "Gagal menghapus baris.");
-  } finally {
-    setDeletingKey(null);
+  async function handleDelete(type, rowOrId) {
+    const id = typeof rowOrId === "number" ? rowOrId : rowOrId?.id ?? null;
+    const key = `${type}-${id ?? "x"}`;
+    setDeletingKey(key);
+    try {
+      const isNumber = typeof rowOrId === "number";
+      await apiDelete({
+        type,
+        rowIndex: isNumber ? rowOrId : rowOrId?.id ?? null,
+        year,
+        month,
+        tanggal: isNumber ? null : rowOrId?.tanggal,
+        uang: isNumber ? null : rowOrId?.uang,
+        keterangan: isNumber ? null : rowOrId?.keterangan,
+      });
+      await reloadSummary();
+    } catch (e) {
+      window.alert(e.message || "Gagal menghapus baris.");
+    } finally {
+      setDeletingKey(null);
+    }
   }
-}
-
 
   return (
     <div style={styles.container}>
@@ -571,36 +589,7 @@ async function handleDelete(type, rowOrId) {
                             wordBreak: "break-word",
                           }}
                         >
-                          {(() => {
-                            const dateObj = new Date(r.tanggal);
-                            const hariList = [
-                              "Minggu",
-                              "Senin",
-                              "Selasa",
-                              "Rabu",
-                              "Kamis",
-                              "Jumat",
-                              "Sabtu",
-                            ];
-                            const bulanList = [
-                              "Januari",
-                              "Februari",
-                              "Maret",
-                              "April",
-                              "Mei",
-                              "Juni",
-                              "Juli",
-                              "Agustus",
-                              "September",
-                              "Oktober",
-                              "November",
-                              "Desember",
-                            ];
-                            const hari = hariList[dateObj.getDay()];
-                            const bulan = bulanList[dateObj.getMonth()];
-                            const tahun = dateObj.getFullYear();
-                            return `${hari}, ${bulan} ${tahun}`;
-                          })()}
+                          {fmtTanggalSingkat(r.tanggal)}
                         </td>
 
                         <td
@@ -753,36 +742,7 @@ async function handleDelete(type, rowOrId) {
                             wordBreak: "break-word",
                           }}
                         >
-                          {(() => {
-                            const dateObj = new Date(r.tanggal);
-                            const hariList = [
-                              "Minggu",
-                              "Senin",
-                              "Selasa",
-                              "Rabu",
-                              "Kamis",
-                              "Jumat",
-                              "Sabtu",
-                            ];
-                            const bulanList = [
-                              "Januari",
-                              "Februari",
-                              "Maret",
-                              "April",
-                              "Mei",
-                              "Juni",
-                              "Juli",
-                              "Agustus",
-                              "September",
-                              "Oktober",
-                              "November",
-                              "Desember",
-                            ];
-                            const hari = hariList[dateObj.getDay()];
-                            const bulan = bulanList[dateObj.getMonth()];
-                            const tahun = dateObj.getFullYear();
-                            return `${hari}, ${bulan} ${tahun}`;
-                          })()}
+                          {fmtTanggalSingkat(r.tanggal)}
                         </td>
 
                         <td
