@@ -51,6 +51,7 @@ function fmtTanggalAngka(tgl) {
 }
 
 
+
   function fmtRupiah(n) {
     return `Rp ${Number(n || 0).toLocaleString("id-ID")}`;
   }
@@ -264,7 +265,7 @@ function fmtTanggalAngka(tgl) {
         margin: { left: margin, right: margin },
         head: [["Tanggal", "Keterangan", "Uang (Rp)"]],
         body: (res.debetRows || []).map((r) => [
-          fmtTanggalSingkat(r.tanggal),
+          fmtTanggalAngka(r.tanggal),
           r.keterangan || "",
           Number(r.uang || 0).toLocaleString("id-ID"),
         ]),
@@ -293,10 +294,11 @@ function fmtTanggalAngka(tgl) {
         margin: { left: margin, right: margin },
         head: [["Tanggal", "Keterangan", "Uang (Rp)"]],
         body: (res.kreditRows || []).map((r) => [
-          fmtTanggalSingkat(r.tanggal),
+          fmtTanggalAngka(r.tanggal),
           r.keterangan || "",
           Number(r.uang || 0).toLocaleString("id-ID"),
         ]),
+
         theme: "grid",
         styles: { fontSize: 10, cellPadding: 4 },
         headStyles: { fillColor: [247, 247, 247], textColor: 20 },
