@@ -41,34 +41,15 @@ export default function RekapPage({ onCancel }) {
   }
 
   // helper format tanggal singkat "Senin, November 2025"
-  function fmtTanggalSingkat(tgl) {
-    const d = parseTanggal(tgl);
-    if (!d) return String(tgl || "");
-    const hari = [
-      "Minggu",
-      "Senin",
-      "Selasa",
-      "Rabu",
-      "Kamis",
-      "Jumat",
-      "Sabtu",
-    ][d.getDay()];
-    const bulan = [
-      "Januari",
-      "Februari",
-      "Maret",
-      "April",
-      "Mei",
-      "Juni",
-      "Juli",
-      "Agustus",
-      "September",
-      "Oktober",
-      "November",
-      "Desember",
-    ][d.getMonth()];
-    return `${hari}, ${bulan} ${d.getFullYear()}`;
-  }
+function fmtTanggalAngka(tgl) {
+  const d = parseTanggal(tgl);
+  if (!d) return String(tgl || "");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
 
   function fmtRupiah(n) {
     return `Rp ${Number(n || 0).toLocaleString("id-ID")}`;
@@ -589,7 +570,7 @@ export default function RekapPage({ onCancel }) {
                             wordBreak: "break-word",
                           }}
                         >
-                          {fmtTanggalSingkat(r.tanggal)}
+                          {fmtTanggalAngka(r.tanggal)}
                         </td>
 
                         <td
@@ -742,7 +723,7 @@ export default function RekapPage({ onCancel }) {
                             wordBreak: "break-word",
                           }}
                         >
-                          {fmtTanggalSingkat(r.tanggal)}
+                          {fmtTanggalAngka(r.tanggal)}
                         </td>
 
                         <td
