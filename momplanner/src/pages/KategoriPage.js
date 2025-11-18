@@ -48,6 +48,27 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
     setNewCategory("");
   };
 
+  // 🔥 Hapus kategori + data detailnya di localStorage
+  const handleDeleteCategory = (cat) => {
+    const ok = window.confirm(`Hapus kategori "${cat}"?`);
+    if (!ok) return;
+
+    // hapus dari list kategori
+    setCategories((prev) => prev.filter((c) => c !== cat));
+
+    // hapus data detail kategori di MP_CATEGORY_DATA
+    const raw = localStorage.getItem("MP_CATEGORY_DATA");
+    if (raw) {
+      try {
+        const all = JSON.parse(raw) || {};
+        delete all[cat];
+        localStorage.setItem("MP_CATEGORY_DATA", JSON.stringify(all));
+      } catch (e) {
+        console.error("Gagal hapus data kategori di localStorage", e);
+      }
+    }
+  };
+
   const styles = {
     container: {
       minHeight: "100vh",
@@ -108,13 +129,29 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
       background: "white",
       border: "2px solid #333",
       borderRadius: "8px",
-      padding: "16px",
+      padding: "12px 14px",
       textAlign: "center",
       fontSize: "14px",
       fontWeight: "500",
       cursor: "pointer",
       transition: "all 0.2s ease",
       color: "#333",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      gap: "8px",
+    },
+    categoryName: {
+      flex: 1,
+    },
+    deleteBtn: {
+      padding: "6px 10px",
+      borderRadius: "4px",
+      border: "none",
+      fontSize: "12px",
+      cursor: "pointer",
+      backgroundColor: "#ff6b6b",
+      color: "#ffffff",
     },
     formRow: {
       display: "flex",
@@ -127,7 +164,7 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
       minWidth: "180px",
       padding: "10px 12px",
       borderRadius: "6px",
-      border: "1px solid #ccc",
+      border: "1px solid ",
       fontSize: "14px",
       fontFamily: "inherit",
     },
@@ -189,7 +226,25 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
                     e.currentTarget.style.color = "#333";
                   }}
                 >
-                  {cat}
+                  <div style={styles.categoryName}>{cat}</div>
+                  <button
+                    type="button"
+                    style={styles.deleteBtn}
+                    onClick={(e) => {
+                      e.stopPropagation(); // biar tidak buka detail
+                      handleDeleteCategory(cat);
+                    }}
+                    onMouseEnter={(e) => {
+                      e.stopPropagation();
+                      e.currentTarget.style.backgroundColor = "#e84141";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.stopPropagation();
+                      e.currentTarget.style.backgroundColor = "#ff6b6b";
+                    }}
+                  >
+                    Hapus
+                  </button>
                 </div>
               ))}
             </div>
