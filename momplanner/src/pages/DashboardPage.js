@@ -171,7 +171,6 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
       </div>
 
       <div style={styles.mainContent}>
-
         <div style={styles.buttonGrid}>
           <button
             onClick={() => onNavigate("debet")}
@@ -197,7 +196,6 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
             - Kredit
           </button>
 
-          {/* 🔽 Tambahan baru */}
           <button
             onClick={() => onNavigate("rekap")}
             style={{ ...styles.btn, ...styles.btnSecondary }}
@@ -211,6 +209,22 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
             }}
           >
             Rekap Bulanan
+          </button>
+
+          {/* 🔥 TOMBOL BARU: KATEGORI */}
+          <button
+            onClick={() => onNavigate("kategori")}
+            style={{ ...styles.btn, ...styles.btnSecondary }}
+            onMouseEnter={(e) => {
+              e.target.style.background = "#333";
+              e.target.style.color = "white";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = "white";
+              e.target.style.color = "#333";
+            }}
+          >
+            Kategori
           </button>
         </div>
 
