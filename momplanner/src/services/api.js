@@ -100,3 +100,8 @@ export async function apiWriteKategori({ name, description, amount }) {
     password: auth.password || "",
   });
 }
+
+export async function apiGetKategoriData(name) {
+  const { data } = await postForm({ mode: "kategori_read", name });
+  return data || [];
+}

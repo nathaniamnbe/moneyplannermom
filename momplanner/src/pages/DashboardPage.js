@@ -5,7 +5,9 @@ import {
   apiGetKategoriList,
   apiAddKategori,
   apiWriteKategori,
+  apiGetKategoriData,
 } from "../services/api";
+
 
 function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
   const totalDebet = (transactions || [])
@@ -27,6 +29,7 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
   const [isSavingKategori, setIsSavingKategori] = useState(false);
   const [newKategoriName, setNewKategoriName] = useState("");
   const [isAddingKategori, setIsAddingKategori] = useState(false);
+  const [kategoriData, setKategoriData] = useState([]); // daftar baris untuk kategori terpilih
 
   // Load list kategori dari Apps Script
   useEffect(() => {
@@ -244,6 +247,17 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
     },
   };
 
+  async function handleSelectKategori(nm) {
+    setSelectedKategori(nm);
+    try {
+      const rows = await apiGetKategoriData(nm);
+      setKategoriData(rows);
+    } catch (err) {
+      console.error("Gagal mengambil data kategori:", err);
+      setKategoriData([]);
+    }
+  }
+
   return (
     <div style={styles.container}>
       <div style={styles.headerWrapper}>
@@ -342,7 +356,7 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
                 <button
                   key={nm}
                   type="button"
-                  onClick={() => setSelectedKategori(nm)}
+                  onClick={() => handleSelectKategori(nm)}
                   style={{
                     ...styles.kategoriChip,
                     ...(selectedKategori === nm
@@ -363,21 +377,23 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
                   alert("Pilih kategori dulu.");
                   return;
                 }
-                try {
-                  setIsSavingKategori(true);
-                  await apiWriteKategori({
-                    name: selectedKategori,
-                    description: katDescription,
-                    amount: katAmount,
-                  });
-                  setKatDescription("");
-                  setKatAmount("");
-                  alert("Data kategori tersimpan.");
-                } catch (err) {
-                  alert(err.message || "Gagal menyimpan data kategori.");
-                } finally {
-                  setIsSavingKategori(false);
-                }
+try {
+  setIsSavingKategori(true);
+  await apiWriteKategori({
+    name: selectedKategori,
+    description: katDescription,
+    amount: katAmount,
+  });
+  setKatDescription("");
+  setKatAmount("");
+  // refresh data kategori yang sedang dipilih
+  await handleSelectKategori(selectedKategori);
+  alert("Data kategori tersimpan.");
+} catch (err) {
+  alert(err.message || "Gagal menyimpan data kategori.");
+} finally {
+  setIsSavingKategori(false);
+}
               }}
             >
               <div style={styles.kategoriFormRow}>
@@ -419,6 +435,7 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
                     prev.includes(nm) ? prev : [...prev, nm]
                   );
                   setSelectedKategori(nm);
+                  setKategoriData([]);
                   setNewKategoriName("");
                 } catch (err) {
                   alert(err.message || "Gagal menambah kategori.");
@@ -446,8 +463,77 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
                 </button>
               </div>
             </form>
-          </div>
-        )}
+
+            {/* === TABEL RIWAYAT KATEGORI TERPILIH === */}
+            {selectedKategori && (
+              <div style={{ marginTop: 16 }}>
+                <h3 style={{ fontSize: 14, marginBottom: 8 }}>
+                  Riwayat kategori: {selectedKategori}
+                </h3>
+                {kategoriData.length === 0 ? (
+                  <p style={{ fontSize: 12, color: "#666" }}>
+                    Belum ada data untuk kategori ini.
+                  </p>
+                ) : (
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: 12,
+                    }}
+                  >
+                    <thead>
+                      <tr>
+                        <th
+                          style={{
+                            textAlign: "left",
+                            padding: "6px 4px",
+                            borderBottom: "1px solid #e0e0e0",
+                          }}
+                        >
+                          Keterangan
+                        </th>
+                        <th
+                          style={{
+                            textAlign: "right",
+                            padding: "6px 4px",
+                            borderBottom: "1px solid #e0e0e0",
+                          }}
+                        >
+                          Jumlah (Rp)
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {kategoriData.map((row, idx) => (
+                        <tr key={idx}>
+                          <td
+                            style={{
+                              padding: "6px 4px",
+                              borderBottom: "1px solid #f3f3f3",
+                            }}
+                          >
+                            {row.keterangan}
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 4px",
+                              textAlign: "right",
+                              borderBottom: "1px solid #f3f3f3",
+                            }}
+                          >
+                            {Number(row.jumlah || 0).toLocaleString("id-ID")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+          </div> 
+        )}     
+
 
         {/* Riwayat transaksi lama tetap seperti sebelumnya */}
         {transactions.length > 0 && (
