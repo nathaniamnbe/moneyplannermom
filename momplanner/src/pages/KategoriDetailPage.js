@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { apiKategoriAdd } from "../services/api";
+
 
 export default function KategoriDetailPage({ user, category, onBack }) {
   const [items, setItems] = useState([]);
@@ -36,21 +38,38 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     localStorage.setItem("MP_CATEGORY_DATA", JSON.stringify(all));
   };
 
-  const handleAdd = (e) => {
-    e.preventDefault();
-    const trimmedDesc = desc.trim();
-    const num = Number.parseFloat(String(amount).replace(/[^\d.-]/g, ""));
-    if (!trimmedDesc || isNaN(num)) {
-      alert("Isi keterangan dan jumlah yang valid.");
-      return;
-    }
+const handleAdd = async (e) => {
+  e.preventDefault();
+  const trimmedDesc = desc.trim();
+  const num = Number.parseFloat(String(amount).replace(/[^\d.-]/g, ""));
+
+  if (!trimmedDesc || isNaN(num)) {
+    alert("Isi keterangan dan jumlah yang valid.");
+    return;
+  }
+
+  try {
+    // ✅ Kirim ke Google Sheets tab "kategori"
+    await apiKategoriAdd({
+      category,
+      desc: trimmedDesc,
+      amount: num,
+    });
+
+    // ✅ Update tampilan lokal (localStorage + state)
     const newItem = { desc: trimmedDesc, amount: num };
     const newItems = [...items, newItem];
     setItems(newItems);
     saveAll(newItems);
+
     setDesc("");
     setAmount("");
-  };
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Gagal menyimpan ke kategori.");
+  }
+};
+
 
   const total = items.reduce((sum, it) => sum + (it.amount || 0), 0);
 

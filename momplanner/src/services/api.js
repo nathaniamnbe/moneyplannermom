@@ -80,3 +80,22 @@ export async function apiSummary(year, month) {
   });
   return data; // { year, month, totalDebet, totalKredit, selisih }
 }
+
+// 🔽 Tambahan baru: simpan data kategori ke sheet "kategori"
+export async function apiKategoriAdd({ category, desc, amount }) {
+  const auth = JSON.parse(localStorage.getItem("MP_USER") || "{}");
+  if (!auth?.username || !auth?.password) {
+    throw new Error(
+      "Sesi login tidak lengkap. Silakan logout lalu login lagi."
+    );
+  }
+
+  return postForm({
+    mode: "kategori_add",
+    kategori: category,   // nama kategori
+    keterangan: desc,     // keterangan
+    jumlah: amount,       // angka
+    username: auth.username,
+    password: auth.password,
+  });
+}
