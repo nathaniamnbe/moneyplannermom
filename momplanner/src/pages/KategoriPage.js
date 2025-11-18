@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
-export default function KategoriPage({ user, onCancel }) {
-  // Default kategori awal
+export default function KategoriPage({ user, onCancel, onOpenCategory }) {
   const DEFAULT_CATEGORIES = [
     "Hp dde",
     "Maria",
@@ -14,7 +13,7 @@ export default function KategoriPage({ user, onCancel }) {
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [newCategory, setNewCategory] = useState("");
 
-  // Saat pertama kali load, coba ambil dari localStorage
+  // Load dari localStorage
   useEffect(() => {
     const saved = localStorage.getItem("MP_CATEGORIES");
     if (saved) {
@@ -29,7 +28,7 @@ export default function KategoriPage({ user, onCancel }) {
     }
   }, []);
 
-  // Simpan setiap ada perubahan kategori
+  // Simpan setiap kali kategori berubah
   useEffect(() => {
     localStorage.setItem("MP_CATEGORIES", JSON.stringify(categories));
   }, [categories]);
@@ -38,7 +37,6 @@ export default function KategoriPage({ user, onCancel }) {
     e.preventDefault();
     const trimmed = newCategory.trim();
     if (!trimmed) return;
-    // Hindari duplikat
     if (categories.includes(trimmed)) {
       alert("Kategori sudah ada.");
       return;
@@ -47,7 +45,6 @@ export default function KategoriPage({ user, onCancel }) {
     setNewCategory("");
   };
 
-  // ====== STYLE mirip Dashboard ======
   const styles = {
     container: {
       minHeight: "100vh",
@@ -87,7 +84,7 @@ export default function KategoriPage({ user, onCancel }) {
       transition: "all 0.2s ease",
     },
     mainContent: {
-      maxWidth: "800px",
+      maxWidth: "900px",
       margin: "0 auto",
       padding: "32px 16px",
     },
@@ -104,18 +101,25 @@ export default function KategoriPage({ user, onCancel }) {
       marginBottom: "16px",
       color: "#333",
     },
-    categoryList: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "8px",
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+      gap: "12px",
     },
-    categoryItem: {
-      padding: "8px 14px",
-      borderRadius: "999px",
-      border: "1px solid #333",
-      fontSize: "13px",
+    categoryCard: {
       background: "white",
-      color: "#333",
+      border: "1px solid #333",
+      borderRadius: "8px",
+      padding: "12px 14px",
+      textAlign: "center",
+      fontSize: "14px",
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+      boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
+    },
+    categoryCardHover: {
+      background: "#333",
+      color: "white",
     },
     formRow: {
       display: "flex",
@@ -145,7 +149,6 @@ export default function KategoriPage({ user, onCancel }) {
 
   return (
     <div style={styles.container}>
-      {/* HEADER mirip Dashboard */}
       <div style={styles.headerWrapper}>
         <div style={styles.headerInner}>
           <div style={styles.headerContent}>
@@ -164,9 +167,8 @@ export default function KategoriPage({ user, onCancel }) {
         </div>
       </div>
 
-      {/* MAIN CONTENT */}
       <div style={styles.mainContent}>
-        {/* Daftar Kategori */}
+        {/* Daftar kategori dalam bentuk kotak */}
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Daftar Kategori</h2>
           {categories.length === 0 ? (
@@ -174,17 +176,29 @@ export default function KategoriPage({ user, onCancel }) {
               Belum ada kategori.
             </p>
           ) : (
-            <div style={styles.categoryList}>
+            <div style={styles.grid}>
               {categories.map((cat, idx) => (
-                <span key={idx} style={styles.categoryItem}>
+                <div
+                  key={idx}
+                  style={styles.categoryCard}
+                  onClick={() => onOpenCategory && onOpenCategory(cat)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#333";
+                    e.currentTarget.style.color = "white";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "white";
+                    e.currentTarget.style.color = "#000";
+                  }}
+                >
                   {cat}
-                </span>
+                </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Form Tambah Kategori */}
+        {/* Tambah kategori baru */}
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Tambah Kategori Baru</h2>
           <form onSubmit={handleAddCategory}>

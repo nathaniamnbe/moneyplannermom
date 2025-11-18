@@ -1,27 +1,30 @@
 // src/App.js
+"use client";
+
 import React, { useState, useEffect } from "react";
 
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import DebetPage from "./pages/DebetPage";
-import RekapPage from "./pages/RekapPage"; // ✅ import halaman rekap
-import KategoriPage from "./pages/KategoriPage"; // ✅ HALAMAN BARU
+import RekapPage from "./pages/RekapPage";
+import KategoriPage from "./pages/KategoriPage";
+import KategoriDetailPage from "./pages/KategoriDetailPage";
 
 function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("login");
   const [transactions] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("MP_USER");
     if (saved) {
       setUser(JSON.parse(saved));
-      setPage("dashboard"); // ✅ kalau sudah login sebelumnya, langsung ke dashboard
+      setPage("dashboard");
     }
   }, []);
 
   if (!user) {
-    // ✅ Halaman login
     return <LoginPage setUser={setUser} />;
   }
 
@@ -71,12 +74,32 @@ function App() {
     return <RekapPage onCancel={() => setPage("dashboard")} />;
   }
 
-  // === KATEGORI ===
+  // === KATEGORI (LIST KOTAK) ===
   if (page === "kategori") {
-    return <KategoriPage user={user} onCancel={() => setPage("dashboard")} />;
+    return (
+      <KategoriPage
+        user={user}
+        onCancel={() => setPage("dashboard")}
+        onOpenCategory={(cat) => {
+          setSelectedCategory(cat);
+          setPage("kategoriDetail");
+        }}
+      />
+    );
   }
 
-  // Default fallback ke dashboard
+  // === DETAIL KATEGORI ===
+  if (page === "kategoriDetail" && selectedCategory) {
+    return (
+      <KategoriDetailPage
+        user={user}
+        category={selectedCategory}
+        onBack={() => setPage("kategori")}
+      />
+    );
+  }
+
+  // fallback
   return (
     <DashboardPage
       transactions={transactions}
