@@ -124,11 +124,17 @@ export default function KategoriDetailPage({ user, category, onBack }) {
       margin: "0 0 16px 0",
     },
     formRow: {
+      display: "flex",
+      flexDirection: "column", // input disusun vertikal
+      gap: "8px",
+    },
+    subRow: {
       display: "grid",
-      gridTemplateColumns: "2fr 1fr auto",
+      gridTemplateColumns: "1fr auto", // jumlah + tombol
       gap: "8px",
       alignItems: "center",
     },
+
     input: {
       width: "100%",
       padding: "10px 12px",
@@ -203,6 +209,7 @@ export default function KategoriDetailPage({ user, category, onBack }) {
           <h2 style={styles.sectionTitle}>Tambah Data</h2>
           <form onSubmit={handleAdd}>
             <div style={styles.formRow}>
+              {/* Keterangan full width */}
               <input
                 type="text"
                 placeholder="Keterangan..."
@@ -210,24 +217,28 @@ export default function KategoriDetailPage({ user, category, onBack }) {
                 onChange={(e) => setDesc(e.target.value)}
                 style={styles.input}
               />
-              <input
-                type="number"
-                placeholder="Jumlah..."
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                style={styles.input}
-              />
-              <button
-                type="submit"
-                style={{
-                  ...styles.addBtn,
-                  backgroundColor: hoverSubmitBtn ? "#222" : "#333",
-                }}
-                onMouseEnter={() => setHoverSubmitBtn(true)}
-                onMouseLeave={() => setHoverSubmitBtn(false)}
-              >
-                Simpan
-              </button>
+
+              {/* Baris kedua: Jumlah + tombol Simpan */}
+              <div style={styles.subRow}>
+                <input
+                  type="number"
+                  placeholder="Jumlah..."
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  style={styles.input}
+                />
+                <button
+                  type="submit"
+                  style={{
+                    ...styles.addBtn,
+                    backgroundColor: hoverSubmitBtn ? "#222" : "#333",
+                  }}
+                  onMouseEnter={() => setHoverSubmitBtn(true)}
+                  onMouseLeave={() => setHoverSubmitBtn(false)}
+                >
+                  Simpan
+                </button>
+              </div>
             </div>
           </form>
         </div>
