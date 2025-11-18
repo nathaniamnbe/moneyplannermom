@@ -1,14 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  apiGetKategoriList,
-  apiAddKategori,
-  apiWriteKategori,
-  apiGetKategoriData,
-} from "../services/api";
-
-
 function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
   const totalDebet = (transactions || [])
     .filter((t) => t.type === "debet")
@@ -19,41 +10,6 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
     .reduce((sum, t) => sum + Number.parseFloat(t.amount || 0), 0);
 
   const netBalance = totalDebet - totalKredit;
-
-  // ====== STATE KATEGORI ======
-  const [kategoriList, setKategoriList] = useState([]);
-  const [selectedKategori, setSelectedKategori] = useState("");
-  const [katDescription, setKatDescription] = useState("");
-  const [katAmount, setKatAmount] = useState("");
-  const [showKategori, setShowKategori] = useState(false);
-  const [isSavingKategori, setIsSavingKategori] = useState(false);
-  const [newKategoriName, setNewKategoriName] = useState("");
-  const [isAddingKategori, setIsAddingKategori] = useState(false);
-  const [kategoriData, setKategoriData] = useState([]); // daftar baris untuk kategori terpilih
-
-  // Load list kategori dari Apps Script
-  useEffect(() => {
-    async function loadKategori() {
-      try {
-        const list = await apiGetKategoriList();
-        if (list && list.length > 0) {
-          setKategoriList(list);
-        } else {
-          // kalau belum ada di sheet, isi default 4 kategori
-          const defaults = ["Hp dde", "Maria", "Asuransi cce", "Tabungan cool"];
-          const created = [];
-          for (const nm of defaults) {
-            await apiAddKategori(nm);
-            created.push(nm);
-          }
-          setKategoriList(created);
-        }
-      } catch (err) {
-        console.error("Gagal memuat kategori:", err);
-      }
-    }
-    loadKategori();
-  }, []);
 
   const styles = {
     container: {
@@ -194,69 +150,7 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
       color: "#333",
       textAlign: "right",
     },
-
-    // ====== STYLE KATEGORI ======
-    kategoriSection: {
-      marginTop: "16px",
-      padding: "20px",
-      background: "white",
-      borderRadius: "8px",
-      border: "1px solid #e0e0e0",
-    },
-    kategoriButtonsRow: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "8px",
-      marginBottom: "12px",
-    },
-    kategoriChip: {
-      padding: "8px 12px",
-      borderRadius: "999px",
-      border: "1px solid #333",
-      background: "white",
-      fontSize: "13px",
-      cursor: "pointer",
-    },
-    kategoriChipActive: {
-      background: "#333",
-      color: "white",
-    },
-    kategoriFormRow: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "8px",
-      marginTop: "8px",
-    },
-    kategoriInput: {
-      padding: "8px 10px",
-      borderRadius: "6px",
-      border: "1px solid #ccc",
-      fontSize: "14px",
-    },
-    kategoriSubmitBtn: {
-      marginTop: "4px",
-      alignSelf: "flex-start",
-      padding: "8px 16px",
-      borderRadius: "6px",
-      border: "none",
-      background: "#16a34a",
-      color: "white",
-      cursor: "pointer",
-      fontSize: "14px",
-      fontWeight: 600,
-    },
   };
-
-  async function handleSelectKategori(nm) {
-    setSelectedKategori(nm);
-    try {
-      const rows = await apiGetKategoriData(nm);
-      setKategoriData(rows);
-    } catch (err) {
-      console.error("Gagal mengambil data kategori:", err);
-      setKategoriData([]);
-    }
-  }
 
   return (
     <div style={styles.container}>
@@ -277,7 +171,6 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
       </div>
 
       <div style={styles.mainContent}>
-        {/* (optional) ringkasan saldo bisa ditampilkan lagi nanti pakai totalDebet, totalKredit, netBalance */}
 
         <div style={styles.buttonGrid}>
           <button
@@ -304,6 +197,7 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
             - Kredit
           </button>
 
+          {/* 🔽 Tambahan baru */}
           <button
             onClick={() => onNavigate("rekap")}
             style={{ ...styles.btn, ...styles.btnSecondary }}
@@ -318,224 +212,8 @@ function DashboardPage({ user, transactions = [], onNavigate, onLogout }) {
           >
             Rekap Bulanan
           </button>
-
-          {/* Tombol untuk membuka section kategori */}
-          <button
-            onClick={() => setShowKategori((prev) => !prev)}
-            style={{ ...styles.btn, ...styles.btnSecondary }}
-            onMouseEnter={(e) => {
-              e.target.style.background = "#333";
-              e.target.style.color = "white";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = "white";
-              e.target.style.color = "#333";
-            }}
-          >
-            Kategori
-          </button>
         </div>
 
-        {/* SECTION KATEGORI */}
-        {showKategori && (
-          <div style={styles.kategoriSection}>
-            <h2 style={{ fontSize: 16, margin: "0 0 4px 0" }}>Kategori</h2>
-            <p
-              style={{
-                fontSize: 12,
-                color: "#666",
-                margin: "0 0 10px 0",
-              }}
-            >
-              Pilih kategori, lalu isi keterangan dan jumlah. Data akan
-              tersimpan ke sheet kategori di Google Sheets.
-            </p>
-
-            <div style={styles.kategoriButtonsRow}>
-              {kategoriList.map((nm) => (
-                <button
-                  key={nm}
-                  type="button"
-                  onClick={() => handleSelectKategori(nm)}
-                  style={{
-                    ...styles.kategoriChip,
-                    ...(selectedKategori === nm
-                      ? styles.kategoriChipActive
-                      : {}),
-                  }}
-                >
-                  {nm}
-                </button>
-              ))}
-            </div>
-
-            {/* Form input data kategori */}
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (!selectedKategori) {
-                  alert("Pilih kategori dulu.");
-                  return;
-                }
-try {
-  setIsSavingKategori(true);
-  await apiWriteKategori({
-    name: selectedKategori,
-    description: katDescription,
-    amount: katAmount,
-  });
-  setKatDescription("");
-  setKatAmount("");
-  // refresh data kategori yang sedang dipilih
-  await handleSelectKategori(selectedKategori);
-  alert("Data kategori tersimpan.");
-} catch (err) {
-  alert(err.message || "Gagal menyimpan data kategori.");
-} finally {
-  setIsSavingKategori(false);
-}
-              }}
-            >
-              <div style={styles.kategoriFormRow}>
-                <input
-                  style={styles.kategoriInput}
-                  placeholder="Keterangan"
-                  value={katDescription}
-                  onChange={(e) => setKatDescription(e.target.value)}
-                />
-                <input
-                  style={styles.kategoriInput}
-                  placeholder="Jumlah (Rp)"
-                  type="number"
-                  value={katAmount}
-                  onChange={(e) => setKatAmount(e.target.value)}
-                />
-                <button
-                  type="submit"
-                  style={styles.kategoriSubmitBtn}
-                  disabled={isSavingKategori}
-                >
-                  {isSavingKategori ? "Menyimpan..." : "Simpan ke Kategori"}
-                </button>
-              </div>
-            </form>
-
-            <hr style={{ margin: "16px 0" }} />
-
-            {/* Form tambah kategori baru */}
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const nm = newKategoriName.trim();
-                if (!nm) return;
-                try {
-                  setIsAddingKategori(true);
-                  await apiAddKategori(nm);
-                  setKategoriList((prev) =>
-                    prev.includes(nm) ? prev : [...prev, nm]
-                  );
-                  setSelectedKategori(nm);
-                  setKategoriData([]);
-                  setNewKategoriName("");
-                } catch (err) {
-                  alert(err.message || "Gagal menambah kategori.");
-                } finally {
-                  setIsAddingKategori(false);
-                }
-              }}
-            >
-              <div style={styles.kategoriFormRow}>
-                <input
-                  style={styles.kategoriInput}
-                  placeholder="Tambah kategori baru..."
-                  value={newKategoriName}
-                  onChange={(e) => setNewKategoriName(e.target.value)}
-                />
-                <button
-                  type="submit"
-                  style={{
-                    ...styles.kategoriSubmitBtn,
-                    background: "#2563eb",
-                  }}
-                  disabled={isAddingKategori}
-                >
-                  {isAddingKategori ? "Menambah..." : "Tambah Kategori"}
-                </button>
-              </div>
-            </form>
-
-            {/* === TABEL RIWAYAT KATEGORI TERPILIH === */}
-            {selectedKategori && (
-              <div style={{ marginTop: 16 }}>
-                <h3 style={{ fontSize: 14, marginBottom: 8 }}>
-                  Riwayat kategori: {selectedKategori}
-                </h3>
-                {kategoriData.length === 0 ? (
-                  <p style={{ fontSize: 12, color: "#666" }}>
-                    Belum ada data untuk kategori ini.
-                  </p>
-                ) : (
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      fontSize: 12,
-                    }}
-                  >
-                    <thead>
-                      <tr>
-                        <th
-                          style={{
-                            textAlign: "left",
-                            padding: "6px 4px",
-                            borderBottom: "1px solid #e0e0e0",
-                          }}
-                        >
-                          Keterangan
-                        </th>
-                        <th
-                          style={{
-                            textAlign: "right",
-                            padding: "6px 4px",
-                            borderBottom: "1px solid #e0e0e0",
-                          }}
-                        >
-                          Jumlah (Rp)
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {kategoriData.map((row, idx) => (
-                        <tr key={idx}>
-                          <td
-                            style={{
-                              padding: "6px 4px",
-                              borderBottom: "1px solid #f3f3f3",
-                            }}
-                          >
-                            {row.keterangan}
-                          </td>
-                          <td
-                            style={{
-                              padding: "6px 4px",
-                              textAlign: "right",
-                              borderBottom: "1px solid #f3f3f3",
-                            }}
-                          >
-                            {Number(row.jumlah || 0).toLocaleString("id-ID")}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            )}
-          </div> 
-        )}     
-
-
-        {/* Riwayat transaksi lama tetap seperti sebelumnya */}
         {transactions.length > 0 && (
           <div style={styles.transactionsContainer}>
             <div style={styles.transactionsHeader}>

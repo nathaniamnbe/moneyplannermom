@@ -10,13 +10,13 @@ async function postForm(payload) {
   return data;
 }
 
-// ====== AUTH & TRANSAKSI DEBET/KREDIT ======
-
 export async function apiLogin(username, password) {
   const { user } = await postForm({ mode: "login", username, password });
   // simpan password untuk request delete
   return { ...user, password }; // { username, name, password }
 }
+
+
 
 export async function apiWrite({ type, date, description, amount }) {
   const auth = JSON.parse(localStorage.getItem("MP_USER") || "{}");
@@ -33,9 +33,10 @@ export async function apiWrite({ type, date, description, amount }) {
     amount,
     username: auth.username, // ✅ WAJIB
     password: auth.password, // ✅ WAJIB
-    name: auth.name || "", // opsional
+    name: auth.name || "", // opsional, backend kamu men-support
   });
 }
+
 
 export async function apiDelete({
   type,
@@ -66,7 +67,11 @@ export async function apiDelete({
   });
 }
 
-// Ringkasan debet/kredit per bulan
+
+
+
+
+// 🔽 Tambahan baru: ambil ringkasan debet/kredit per bulan
 export async function apiSummary(year, month) {
   const { data } = await postForm({
     mode: "summary",
@@ -74,34 +79,4 @@ export async function apiSummary(year, month) {
     month, // 1..12 (Jan = 1, dst)
   });
   return data; // { year, month, totalDebet, totalKredit, selisih }
-}
-
-// ====== KATEGORI ======
-
-export async function apiGetKategoriList() {
-  const { data } = await postForm({ mode: "kategori_list" });
-  return data || []; // array nama kategori
-}
-
-export async function apiAddKategori(name) {
-  const { message } = await postForm({ mode: "kategori_add", name });
-  return message;
-}
-
-export async function apiWriteKategori({ name, description, amount }) {
-  // kalau di Apps Script kamu mau pakai auth juga, bisa baca username/password
-  const auth = JSON.parse(localStorage.getItem("MP_USER") || "{}");
-  return postForm({
-    mode: "kategori_write",
-    name,
-    description,
-    amount,
-    username: auth.username || "",
-    password: auth.password || "",
-  });
-}
-
-export async function apiGetKategoriData(name) {
-  const { data } = await postForm({ mode: "kategori_read", name });
-  return data || [];
 }
