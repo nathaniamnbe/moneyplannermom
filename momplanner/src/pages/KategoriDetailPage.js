@@ -8,14 +8,21 @@ export default function KategoriDetailPage({ user, category, onBack }) {
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState("");
 
-  // Load existing data
+  const [hoverBackBtn, setHoverBackBtn] = useState(false);
+  const [hoverSubmitBtn, setHoverSubmitBtn] = useState(false);
+
+  // load data kategori dari localStorage
   useEffect(() => {
     const raw = localStorage.getItem("MP_CATEGORY_DATA");
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        if (parsed[category]) setItems(parsed[category]);
-      } catch {}
+        if (parsed && parsed[category]) {
+          setItems(parsed[category]);
+        }
+      } catch (e) {
+        console.error("Gagal parse MP_CATEGORY_DATA", e);
+      }
     }
   }, [category]);
 
@@ -24,203 +31,241 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     let all = {};
     if (raw) {
       try {
-        all = JSON.parse(raw);
-      } catch {}
+        all = JSON.parse(raw) || {};
+      } catch {
+        all = {};
+      }
     }
     all[category] = newItems;
     localStorage.setItem("MP_CATEGORY_DATA", JSON.stringify(all));
   };
 
-  // Add new item
   const handleAdd = async (e) => {
     e.preventDefault();
-    const d = desc.trim();
-    const num = Number(amount);
+    const trimmedDesc = desc.trim();
+    const num = Number.parseFloat(String(amount).replace(/[^\d.-]/g, ""));
 
-    if (!d || isNaN(num)) {
-      alert("Isi keterangan & jumlah dengan benar.");
+    if (!trimmedDesc || isNaN(num)) {
+      alert("Isi keterangan dan jumlah yang valid.");
       return;
     }
 
-    // Save to Google Sheets
     try {
-      await apiKategoriAdd({ category, desc: d, amount: num });
+      await apiKategoriAdd({
+        category,
+        desc: trimmedDesc,
+        amount: num,
+      });
+
+      const newItem = { desc: trimmedDesc, amount: num };
+      const newItems = [...items, newItem];
+      setItems(newItems);
+      saveAll(newItems);
+
+      setDesc("");
+      setAmount("");
     } catch (err) {
       console.error(err);
+      alert(err.message || "Gagal menyimpan ke kategori.");
     }
-
-    const newItems = [...items, { desc: d, amount: num }];
-    setItems(newItems);
-    saveAll(newItems);
-
-    setDesc("");
-    setAmount("");
   };
 
-  // Delete item
-  const handleDelete = (idx) => {
-    if (!confirm("Hapus data ini?")) return;
-
-    const newItems = items.filter((_, i) => i !== idx);
-    setItems(newItems);
-    saveAll(newItems);
-  };
-
-  const total = items.reduce((sum, it) => sum + Number(it.amount || 0), 0);
+  const total = items.reduce((sum, it) => sum + (it.amount || 0), 0);
 
   const styles = {
     container: {
       minHeight: "100vh",
-      background: "#f5f5f5",
+      backgroundColor: "#f5f5f5",
       padding: "20px",
-      fontFamily: "Segoe UI",
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     },
     header: {
-      background: "#fff",
-      padding: "20px",
-      borderRadius: "10px",
       display: "flex",
       alignItems: "center",
       gap: "20px",
-      marginBottom: "25px",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+      marginBottom: "30px",
+      backgroundColor: "#ffffff",
+      padding: "20px",
+      borderRadius: "8px",
+      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
     },
-    backBtn: {
-      background: "#eee",
+    backButton: {
+      backgroundColor: "#f0f0f0",
       border: "none",
       padding: "10px 16px",
       borderRadius: "6px",
       cursor: "pointer",
+      fontSize: "14px",
+      fontWeight: "500",
+      color: "#333333",
+      transition: "all 0.2s ease",
+    },
+    title: {
+      fontSize: "24px",
+      fontWeight: "600",
+      color: "#222222",
+      margin: "0",
+    },
+    mainContent: {
+      maxWidth: "1200px",
+      margin: "0 auto",
     },
     card: {
-      background: "#fff",
-      padding: "20px",
-      borderRadius: "10px",
-      marginBottom: "20px",
-      boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+      background: "white",
+      borderRadius: "8px",
+      padding: "24px",
+      marginBottom: "24px",
+      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
     },
-
-    inputRow: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "10px",
+    sectionTitle: {
+      fontSize: "16px",
+      fontWeight: "bold",
+      color: "#333",
+      margin: "0 0 16px 0",
     },
-
+    formRow: {
+      display: "grid",
+      gridTemplateColumns: "2fr 1fr auto",
+      gap: "8px",
+      alignItems: "center",
+    },
     input: {
-      padding: "12px",
-      fontSize: "15px",
+      width: "100%",
+      padding: "10px 12px",
       borderRadius: "6px",
-      border: "1px solid #cccccc",
+      border: "1px solid #ccc",
+      fontSize: "14px",
+      fontFamily: "inherit",
     },
-
-    submitBtn: {
-      padding: "12px",
+    addBtn: {
+      padding: "10px 16px",
       background: "#333",
       color: "white",
-      border: "none",
       borderRadius: "6px",
-      fontSize: "15px",
+      border: "none",
       cursor: "pointer",
+      fontSize: "14px",
+      fontWeight: "500",
+      transition: "all 0.2s ease",
     },
-
-    itemCard: {
-      border: "1px solid #ddd",
-      borderRadius: "10px",
-      padding: "14px",
-      marginBottom: "12px",
+    table: {
+      width: "100%",
+      borderCollapse: "collapse",
+      marginTop: "16px",
+    },
+    th: {
+      textAlign: "left",
+      borderBottom: "1px solid #ddd",
+      padding: "12px 8px",
+      fontSize: "13px",
+      fontWeight: "600",
+      color: "#333",
       background: "#fafafa",
     },
-    itemTitle: {
-      fontSize: "15px",
-      fontWeight: "600",
-      marginBottom: "6px",
+    td: {
+      borderBottom: "1px solid #f0f0f0",
+      padding: "12px 8px",
+      fontSize: "14px",
+      color: "#333",
     },
-    delButton: {
-      marginTop: "8px",
-      padding: "6px 10px",
-      fontSize: "12px",
-      borderRadius: "5px",
-      border: "none",
-      background: "#ff6b6b",
-      color: "white",
-      cursor: "pointer",
-    },
-
     totalRow: {
-      marginTop: "10px",
-      padding: "12px",
-      background: "#f0f0f0",
-      fontWeight: "700",
-      borderRadius: "6px",
+      fontWeight: "bold",
+      background: "#fafafa",
     },
   };
 
   return (
     <div style={styles.container}>
-      {/* HEADER */}
+      {/* HEADER ala Input Debet */}
       <div style={styles.header}>
-        <button style={styles.backBtn} onClick={onBack}>
+        <button
+          style={{
+            ...styles.backButton,
+            backgroundColor: hoverBackBtn ? "#e0e0e0" : "#f0f0f0",
+          }}
+          onClick={onBack}
+          onMouseEnter={() => setHoverBackBtn(true)}
+          onMouseLeave={() => setHoverBackBtn(false)}
+        >
           ← Kembali
         </button>
-        <h2>
-          {user?.name} - {category}
-        </h2>
+        <h1 style={styles.title}>
+          {user?.name
+            ? `${user.name} - ${category}`
+            : `Detail Kategori: ${category}`}
+        </h1>
       </div>
 
-      {/* INPUT */}
-      <div style={styles.card}>
-        <h3>Tambah Data</h3>
-        <form onSubmit={handleAdd} style={styles.inputRow}>
-          <input
-            style={styles.input}
-            placeholder="Keterangan..."
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-          />
-
-          <input
-            style={styles.input}
-            placeholder="Jumlah..."
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-
-          <button style={styles.submitBtn}>Simpan</button>
-        </form>
-      </div>
-
-      {/* LIST OF SAVED ITEMS */}
-      <div style={styles.card}>
-        <h3>Data Tersimpan</h3>
-
-        {items.length === 0 ? (
-          <p style={{ color: "#888" }}>Belum ada data.</p>
-        ) : (
-          <>
-            {items.map((item, idx) => (
-              <div key={idx} style={styles.itemCard}>
-                <div style={styles.itemTitle}>Keterangan:</div>
-                <div>{item.desc}</div>
-
-                <div style={{ marginTop: "8px", fontWeight: "600" }}>
-                  Jumlah: Rp {Number(item.amount).toLocaleString("id-ID")}
-                </div>
-
-                <button
-                  style={styles.delButton}
-                  onClick={() => handleDelete(idx)}
-                >
-                  Hapus
-                </button>
-              </div>
-            ))}
-
-            <div style={styles.totalRow}>
-              Total: Rp {total.toLocaleString("id-ID")}
+      {/* MAIN CONTENT */}
+      <div style={styles.mainContent}>
+        {/* Form input */}
+        <div style={styles.card}>
+          <h2 style={styles.sectionTitle}>Tambah Data</h2>
+          <form onSubmit={handleAdd}>
+            <div style={styles.formRow}>
+              <input
+                type="text"
+                placeholder="Keterangan..."
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                style={styles.input}
+              />
+              <input
+                type="number"
+                placeholder="Jumlah..."
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                style={styles.input}
+              />
+              <button
+                type="submit"
+                style={{
+                  ...styles.addBtn,
+                  backgroundColor: hoverSubmitBtn ? "#222" : "#333",
+                }}
+                onMouseEnter={() => setHoverSubmitBtn(true)}
+                onMouseLeave={() => setHoverSubmitBtn(false)}
+              >
+                Simpan
+              </button>
             </div>
-          </>
-        )}
+          </form>
+        </div>
+
+        {/* Tabel hasil */}
+        <div style={styles.card}>
+          <h2 style={styles.sectionTitle}>Data Tersimpan</h2>
+          {items.length === 0 ? (
+            <p style={{ color: "#999", fontSize: "14px" }}>
+              Belum ada data untuk kategori ini.
+            </p>
+          ) : (
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Keterangan</th>
+                  <th style={styles.th}>Jumlah</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((it, idx) => (
+                  <tr key={idx}>
+                    <td style={styles.td}>{it.desc}</td>
+                    <td style={styles.td}>
+                      Rp {Number(it.amount).toLocaleString("id-ID")}
+                    </td>
+                  </tr>
+                ))}
+                <tr style={styles.totalRow}>
+                  <td style={styles.td}>Total</td>
+                  <td style={styles.td}>
+                    Rp {Number(total).toLocaleString("id-ID")}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   );
