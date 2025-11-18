@@ -13,6 +13,9 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [newCategory, setNewCategory] = useState("");
 
+  const [hoverBackBtn, setHoverBackBtn] = useState(false);
+  const [hoverAddBtn, setHoverAddBtn] = useState(false);
+
   // Load dari localStorage
   useEffect(() => {
     const saved = localStorage.getItem("MP_CATEGORIES");
@@ -48,52 +51,47 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
   const styles = {
     container: {
       minHeight: "100vh",
+      backgroundColor: "#f5f5f5",
       padding: "20px",
-      background: "#f5f5f5",
-      fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     },
-    headerWrapper: {
-      borderBottom: "1px solid #e0e0e0",
-      background: "white",
-    },
-    headerInner: {
-      maxWidth: "1200px",
-      margin: "0 auto",
-      padding: "24px 16px",
-    },
-    headerContent: {
+    header: {
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
+      gap: "20px",
+      marginBottom: "30px",
+      backgroundColor: "#ffffff",
+      padding: "20px",
+      borderRadius: "8px",
+      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+    },
+    backButton: {
+      backgroundColor: "#f0f0f0",
+      border: "none",
+      padding: "10px 16px",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontSize: "14px",
+      fontWeight: "500",
+      color: "#333333",
+      transition: "all 0.2s ease",
     },
     title: {
       fontSize: "24px",
-      fontWeight: "bold",
-      color: "#333",
+      fontWeight: "600",
+      color: "#222222",
       margin: "0",
-    },
-    backBtn: {
-      padding: "8px 16px",
-      background: "#333",
-      color: "white",
-      border: "none",
-      borderRadius: "6px",
-      cursor: "pointer",
-      fontSize: "13px",
-      fontWeight: "500",
-      transition: "all 0.2s ease",
     },
     mainContent: {
       maxWidth: "1200px",
       margin: "0 auto",
-      padding: "32px 16px",
     },
     card: {
       background: "white",
-      border: "1px solid #e0e0e0",
       borderRadius: "8px",
       padding: "24px",
       marginBottom: "24px",
+      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
     },
     sectionTitle: {
       fontSize: "16px",
@@ -148,24 +146,25 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
 
   return (
     <div style={styles.container}>
-      <div style={styles.headerWrapper}>
-        <div style={styles.headerInner}>
-          <div style={styles.headerContent}>
-            <h1 style={styles.title}>
-              {user?.name ? `${user.name} - Kategori` : "Kategori"}
-            </h1>
-            <button
-              onClick={onCancel}
-              style={styles.backBtn}
-              onMouseEnter={(e) => (e.target.style.background = "#555")}
-              onMouseLeave={(e) => (e.target.style.background = "#333")}
-            >
-              Kembali
-            </button>
-          </div>
-        </div>
+      {/* HEADER ala Input Debet */}
+      <div style={styles.header}>
+        <button
+          style={{
+            ...styles.backButton,
+            backgroundColor: hoverBackBtn ? "#e0e0e0" : "#f0f0f0",
+          }}
+          onClick={onCancel}
+          onMouseEnter={() => setHoverBackBtn(true)}
+          onMouseLeave={() => setHoverBackBtn(false)}
+        >
+          ← Kembali
+        </button>
+        <h1 style={styles.title}>
+          {user?.name ? `${user.name} - Kategori` : "Kategori"}
+        </h1>
       </div>
 
+      {/* MAIN CONTENT */}
       <div style={styles.mainContent}>
         {/* Daftar kategori dalam bentuk kotak */}
         <div style={styles.card}>
@@ -211,9 +210,12 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
               />
               <button
                 type="submit"
-                style={styles.addBtn}
-                onMouseEnter={(e) => (e.target.style.background = "#222")}
-                onMouseLeave={(e) => (e.target.style.background = "#333")}
+                style={{
+                  ...styles.addBtn,
+                  backgroundColor: hoverAddBtn ? "#222" : "#333",
+                }}
+                onMouseEnter={() => setHoverAddBtn(true)}
+                onMouseLeave={() => setHoverAddBtn(false)}
               >
                 Tambah
               </button>

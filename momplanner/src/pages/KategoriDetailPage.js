@@ -8,6 +8,9 @@ export default function KategoriDetailPage({ user, category, onBack }) {
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState("");
 
+  const [hoverBackBtn, setHoverBackBtn] = useState(false);
+  const [hoverSubmitBtn, setHoverSubmitBtn] = useState(false);
+
   // load data kategori dari localStorage
   useEffect(() => {
     const raw = localStorage.getItem("MP_CATEGORY_DATA");
@@ -48,14 +51,12 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     }
 
     try {
-      // ✅ Kirim ke Google Sheets tab "kategori"
       await apiKategoriAdd({
         category,
         desc: trimmedDesc,
         amount: num,
       });
 
-      // ✅ Update tampilan lokal (localStorage + state)
       const newItem = { desc: trimmedDesc, amount: num };
       const newItems = [...items, newItem];
       setItems(newItems);
@@ -74,52 +75,47 @@ export default function KategoriDetailPage({ user, category, onBack }) {
   const styles = {
     container: {
       minHeight: "100vh",
+      backgroundColor: "#f5f5f5",
       padding: "20px",
-      background: "#f5f5f5",
-      fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     },
-    headerWrapper: {
-      borderBottom: "1px solid #e0e0e0",
-      background: "white",
-    },
-    headerInner: {
-      maxWidth: "1200px",
-      margin: "0 auto",
-      padding: "24px 16px",
-    },
-    headerContent: {
+    header: {
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
+      gap: "20px",
+      marginBottom: "30px",
+      backgroundColor: "#ffffff",
+      padding: "20px",
+      borderRadius: "8px",
+      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+    },
+    backButton: {
+      backgroundColor: "#f0f0f0",
+      border: "none",
+      padding: "10px 16px",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontSize: "14px",
+      fontWeight: "500",
+      color: "#333333",
+      transition: "all 0.2s ease",
     },
     title: {
       fontSize: "24px",
-      fontWeight: "bold",
-      color: "#333",
+      fontWeight: "600",
+      color: "#222222",
       margin: "0",
-    },
-    backBtn: {
-      padding: "8px 16px",
-      background: "#333",
-      color: "white",
-      border: "none",
-      borderRadius: "6px",
-      cursor: "pointer",
-      fontSize: "13px",
-      fontWeight: "500",
-      transition: "all 0.2s ease",
     },
     mainContent: {
       maxWidth: "1200px",
       margin: "0 auto",
-      padding: "32px 16px",
     },
     card: {
       background: "white",
-      border: "1px solid #e0e0e0",
       borderRadius: "8px",
       padding: "24px",
       marginBottom: "24px",
+      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
     },
     sectionTitle: {
       fontSize: "16px",
@@ -180,26 +176,27 @@ export default function KategoriDetailPage({ user, category, onBack }) {
 
   return (
     <div style={styles.container}>
-      <div style={styles.headerWrapper}>
-        <div style={styles.headerInner}>
-          <div style={styles.headerContent}>
-            <h1 style={styles.title}>
-              {user?.name
-                ? `${user.name} - ${category}`
-                : `Detail Kategori: ${category}`}
-            </h1>
-            <button
-              onClick={onBack}
-              style={styles.backBtn}
-              onMouseEnter={(e) => (e.target.style.background = "#555")}
-              onMouseLeave={(e) => (e.target.style.background = "#333")}
-            >
-              Kembali
-            </button>
-          </div>
-        </div>
+      {/* HEADER ala Input Debet */}
+      <div style={styles.header}>
+        <button
+          style={{
+            ...styles.backButton,
+            backgroundColor: hoverBackBtn ? "#e0e0e0" : "#f0f0f0",
+          }}
+          onClick={onBack}
+          onMouseEnter={() => setHoverBackBtn(true)}
+          onMouseLeave={() => setHoverBackBtn(false)}
+        >
+          ← Kembali
+        </button>
+        <h1 style={styles.title}>
+          {user?.name
+            ? `${user.name} - ${category}`
+            : `Detail Kategori: ${category}`}
+        </h1>
       </div>
 
+      {/* MAIN CONTENT */}
       <div style={styles.mainContent}>
         {/* Form input */}
         <div style={styles.card}>
@@ -222,9 +219,12 @@ export default function KategoriDetailPage({ user, category, onBack }) {
               />
               <button
                 type="submit"
-                style={styles.addBtn}
-                onMouseEnter={(e) => (e.target.style.background = "#222")}
-                onMouseLeave={(e) => (e.target.style.background = "#333")}
+                style={{
+                  ...styles.addBtn,
+                  backgroundColor: hoverSubmitBtn ? "#222" : "#333",
+                }}
+                onMouseEnter={() => setHoverSubmitBtn(true)}
+                onMouseLeave={() => setHoverSubmitBtn(false)}
               >
                 Simpan
               </button>
