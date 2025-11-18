@@ -84,7 +84,7 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
       transition: "all 0.2s ease",
     },
     mainContent: {
-      maxWidth: "900px",
+      maxWidth: "1200px",
       margin: "0 auto",
       padding: "32px 16px",
     },
@@ -96,10 +96,10 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
       marginBottom: "24px",
     },
     sectionTitle: {
-      fontSize: "18px",
-      fontWeight: "600",
-      marginBottom: "16px",
+      fontSize: "16px",
+      fontWeight: "bold",
       color: "#333",
+      margin: "0 0 16px 0",
     },
     grid: {
       display: "grid",
@@ -108,18 +108,15 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
     },
     categoryCard: {
       background: "white",
-      border: "1px solid #333",
+      border: "2px solid #333",
       borderRadius: "8px",
-      padding: "12px 14px",
+      padding: "16px",
       textAlign: "center",
       fontSize: "14px",
+      fontWeight: "500",
       cursor: "pointer",
       transition: "all 0.2s ease",
-      boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
-    },
-    categoryCardHover: {
-      background: "#333",
-      color: "white",
+      color: "#333",
     },
     formRow: {
       display: "flex",
@@ -134,6 +131,7 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
       borderRadius: "6px",
       border: "1px solid #ccc",
       fontSize: "14px",
+      fontFamily: "inherit",
     },
     addBtn: {
       padding: "10px 16px",
@@ -144,6 +142,7 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
       cursor: "pointer",
       fontSize: "14px",
       fontWeight: "500",
+      transition: "all 0.2s ease",
     },
   };
 
@@ -172,7 +171,7 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Daftar Kategori</h2>
           {categories.length === 0 ? (
-            <p style={{ color: "#777", fontSize: "14px" }}>
+            <p style={{ color: "#999", fontSize: "14px" }}>
               Belum ada kategori.
             </p>
           ) : (
@@ -188,7 +187,7 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = "white";
-                    e.currentTarget.style.color = "#000";
+                    e.currentTarget.style.color = "#333";
                   }}
                 >
                   {cat}
@@ -210,7 +209,12 @@ export default function KategoriPage({ user, onCancel, onOpenCategory }) {
                 onChange={(e) => setNewCategory(e.target.value)}
                 style={styles.input}
               />
-              <button type="submit" style={styles.addBtn}>
+              <button
+                type="submit"
+                style={styles.addBtn}
+                onMouseEnter={(e) => (e.target.style.background = "#222")}
+                onMouseLeave={(e) => (e.target.style.background = "#333")}
+              >
                 Tambah
               </button>
             </div>

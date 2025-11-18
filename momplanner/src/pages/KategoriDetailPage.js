@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { apiKategoriAdd } from "../services/api";
 
-
 export default function KategoriDetailPage({ user, category, onBack }) {
   const [items, setItems] = useState([]);
   const [desc, setDesc] = useState("");
@@ -38,38 +37,37 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     localStorage.setItem("MP_CATEGORY_DATA", JSON.stringify(all));
   };
 
-const handleAdd = async (e) => {
-  e.preventDefault();
-  const trimmedDesc = desc.trim();
-  const num = Number.parseFloat(String(amount).replace(/[^\d.-]/g, ""));
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    const trimmedDesc = desc.trim();
+    const num = Number.parseFloat(String(amount).replace(/[^\d.-]/g, ""));
 
-  if (!trimmedDesc || isNaN(num)) {
-    alert("Isi keterangan dan jumlah yang valid.");
-    return;
-  }
+    if (!trimmedDesc || isNaN(num)) {
+      alert("Isi keterangan dan jumlah yang valid.");
+      return;
+    }
 
-  try {
-    // ✅ Kirim ke Google Sheets tab "kategori"
-    await apiKategoriAdd({
-      category,
-      desc: trimmedDesc,
-      amount: num,
-    });
+    try {
+      // ✅ Kirim ke Google Sheets tab "kategori"
+      await apiKategoriAdd({
+        category,
+        desc: trimmedDesc,
+        amount: num,
+      });
 
-    // ✅ Update tampilan lokal (localStorage + state)
-    const newItem = { desc: trimmedDesc, amount: num };
-    const newItems = [...items, newItem];
-    setItems(newItems);
-    saveAll(newItems);
+      // ✅ Update tampilan lokal (localStorage + state)
+      const newItem = { desc: trimmedDesc, amount: num };
+      const newItems = [...items, newItem];
+      setItems(newItems);
+      saveAll(newItems);
 
-    setDesc("");
-    setAmount("");
-  } catch (err) {
-    console.error(err);
-    alert(err.message || "Gagal menyimpan ke kategori.");
-  }
-};
-
+      setDesc("");
+      setAmount("");
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Gagal menyimpan ke kategori.");
+    }
+  };
 
   const total = items.reduce((sum, it) => sum + (it.amount || 0), 0);
 
@@ -112,7 +110,7 @@ const handleAdd = async (e) => {
       transition: "all 0.2s ease",
     },
     mainContent: {
-      maxWidth: "900px",
+      maxWidth: "1200px",
       margin: "0 auto",
       padding: "32px 16px",
     },
@@ -124,10 +122,10 @@ const handleAdd = async (e) => {
       marginBottom: "24px",
     },
     sectionTitle: {
-      fontSize: "18px",
-      fontWeight: "600",
-      marginBottom: "16px",
+      fontSize: "16px",
+      fontWeight: "bold",
       color: "#333",
+      margin: "0 0 16px 0",
     },
     formRow: {
       display: "grid",
@@ -141,6 +139,7 @@ const handleAdd = async (e) => {
       borderRadius: "6px",
       border: "1px solid #ccc",
       fontSize: "14px",
+      fontFamily: "inherit",
     },
     addBtn: {
       padding: "10px 16px",
@@ -151,6 +150,7 @@ const handleAdd = async (e) => {
       cursor: "pointer",
       fontSize: "14px",
       fontWeight: "500",
+      transition: "all 0.2s ease",
     },
     table: {
       width: "100%",
@@ -160,14 +160,17 @@ const handleAdd = async (e) => {
     th: {
       textAlign: "left",
       borderBottom: "1px solid #ddd",
-      padding: "8px",
+      padding: "12px 8px",
       fontSize: "13px",
-      color: "#555",
+      fontWeight: "600",
+      color: "#333",
+      background: "#fafafa",
     },
     td: {
       borderBottom: "1px solid #f0f0f0",
-      padding: "8px",
+      padding: "12px 8px",
       fontSize: "14px",
+      color: "#333",
     },
     totalRow: {
       fontWeight: "bold",
@@ -217,7 +220,12 @@ const handleAdd = async (e) => {
                 onChange={(e) => setAmount(e.target.value)}
                 style={styles.input}
               />
-              <button type="submit" style={styles.addBtn}>
+              <button
+                type="submit"
+                style={styles.addBtn}
+                onMouseEnter={(e) => (e.target.style.background = "#222")}
+                onMouseLeave={(e) => (e.target.style.background = "#333")}
+              >
                 Simpan
               </button>
             </div>
@@ -228,7 +236,7 @@ const handleAdd = async (e) => {
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Data Tersimpan</h2>
           {items.length === 0 ? (
-            <p style={{ color: "#777", fontSize: "14px" }}>
+            <p style={{ color: "#999", fontSize: "14px" }}>
               Belum ada data untuk kategori ini.
             </p>
           ) : (
