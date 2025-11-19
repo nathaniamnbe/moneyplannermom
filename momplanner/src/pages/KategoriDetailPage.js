@@ -11,7 +11,7 @@ export default function KategoriDetailPage({ user, category, onBack }) {
   const [hoverBackBtn, setHoverBackBtn] = useState(false);
   const [hoverSubmitBtn, setHoverSubmitBtn] = useState(false);
 
-  // load data kategori dari localStorage
+  // ---- Load data dari localStorage saat buka halaman ----
   useEffect(() => {
     const raw = localStorage.getItem("MP_CATEGORY_DATA");
     if (raw) {
@@ -26,6 +26,7 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     }
   }, [category]);
 
+  // ---- Simpan semua data kategori ke localStorage ----
   const saveAll = (newItems) => {
     const raw = localStorage.getItem("MP_CATEGORY_DATA");
     let all = {};
@@ -40,6 +41,7 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     localStorage.setItem("MP_CATEGORY_DATA", JSON.stringify(all));
   };
 
+  // ---- Tambah data baru ----
   const handleAdd = async (e) => {
     e.preventDefault();
     const trimmedDesc = desc.trim();
@@ -50,28 +52,42 @@ export default function KategoriDetailPage({ user, category, onBack }) {
       return;
     }
 
+    // simpan ke Google Sheets (tab kategori)
     try {
       await apiKategoriAdd({
         category,
         desc: trimmedDesc,
         amount: num,
       });
-
-      const newItem = { desc: trimmedDesc, amount: num };
-      const newItems = [...items, newItem];
-      setItems(newItems);
-      saveAll(newItems);
-
-      setDesc("");
-      setAmount("");
     } catch (err) {
-      console.error(err);
-      alert(err.message || "Gagal menyimpan ke kategori.");
+      console.error("Gagal kirim ke Apps Script:", err);
+      // kalau gagal pun tetap simpan lokal supaya user tidak hilang data
     }
+
+    const newItem = { desc: trimmedDesc, amount: num };
+    const newItems = [...items, newItem];
+    setItems(newItems);
+    saveAll(newItems);
+
+    setDesc("");
+    setAmount("");
   };
 
-  const total = items.reduce((sum, it) => sum + (it.amount || 0), 0);
+  // ---- Hapus satu baris data ----
+  const handleDeleteItem = (index) => {
+    if (!window.confirm("Hapus data ini?")) return;
 
+    const newItems = items.filter((_, i) => i !== index);
+    setItems(newItems);
+    saveAll(newItems);
+  };
+
+  const total = items.reduce(
+    (sum, it) => sum + (isNaN(Number(it.amount)) ? 0 : Number(it.amount)),
+    0
+  );
+
+  // ---- STYLES ----
   const styles = {
     container: {
       minHeight: "100vh",
@@ -123,19 +139,19 @@ export default function KategoriDetailPage({ user, category, onBack }) {
       color: "#333",
       margin: "0 0 16px 0",
     },
+
+    // --- form "Tambah Data" ---
     formRow: {
       display: "flex",
       flexDirection: "column",
       gap: "12px",
     },
-
     subRow: {
       display: "flex",
       flexDirection: "row",
       gap: "12px",
       alignItems: "center",
     },
-
     input: {
       flex: 1,
       minWidth: "0",
@@ -145,18 +161,20 @@ export default function KategoriDetailPage({ user, category, onBack }) {
       fontSize: "14px",
       fontFamily: "inherit",
     },
-
     addBtn: {
-      padding: "10px 16px",
+      padding: "12px 18px",
       background: "#333",
       color: "white",
-      borderRadius: "6px",
+      borderRadius: "8px",
       border: "none",
       cursor: "pointer",
       fontSize: "14px",
       fontWeight: "500",
+      whiteSpace: "nowrap",
       transition: "all 0.2s ease",
     },
+
+    // --- tabel Data Tersimpan ---
     table: {
       width: "100%",
       borderCollapse: "collapse",
@@ -173,13 +191,24 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     },
     td: {
       borderBottom: "1px solid #f0f0f0",
-      padding: "12px 8px",
+      padding: "10px 8px",
       fontSize: "14px",
       color: "#333",
+      verticalAlign: "middle",
     },
     totalRow: {
       fontWeight: "bold",
       background: "#fafafa",
+    },
+    deleteBtn: {
+      padding: "6px 10px",
+      borderRadius: "999px",
+      border: "1px solid #ffb3b3",
+      backgroundColor: "#ffe6e6",
+      color: "#d63031",
+      fontSize: "12px",
+      cursor: "pointer",
+      whiteSpace: "nowrap",
     },
   };
 
@@ -205,14 +234,13 @@ export default function KategoriDetailPage({ user, category, onBack }) {
         </h1>
       </div>
 
-      {/* MAIN CONTENT */}
       <div style={styles.mainContent}>
-        {/* Form input */}
+        {/* --- TAMBAH DATA --- */}
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Tambah Data</h2>
           <form onSubmit={handleAdd}>
             <div style={styles.formRow}>
-              {/* Keterangan full width */}
+              {/* Keterangan (full width) */}
               <input
                 type="text"
                 placeholder="Keterangan..."
@@ -246,7 +274,7 @@ export default function KategoriDetailPage({ user, category, onBack }) {
           </form>
         </div>
 
-        {/* Tabel hasil */}
+        {/* --- DATA TERSIMPAN --- */}
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Data Tersimpan</h2>
           {items.length === 0 ? (
@@ -259,6 +287,7 @@ export default function KategoriDetailPage({ user, category, onBack }) {
                 <tr>
                   <th style={styles.th}>Keterangan</th>
                   <th style={styles.th}>Jumlah</th>
+                  <th style={styles.th}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -268,6 +297,15 @@ export default function KategoriDetailPage({ user, category, onBack }) {
                     <td style={styles.td}>
                       Rp {Number(it.amount).toLocaleString("id-ID")}
                     </td>
+                    <td style={styles.td}>
+                      <button
+                        type="button"
+                        style={styles.deleteBtn}
+                        onClick={() => handleDeleteItem(idx)}
+                      >
+                        Hapus
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 <tr style={styles.totalRow}>
@@ -275,6 +313,7 @@ export default function KategoriDetailPage({ user, category, onBack }) {
                   <td style={styles.td}>
                     Rp {Number(total).toLocaleString("id-ID")}
                   </td>
+                  <td style={styles.td}></td>
                 </tr>
               </tbody>
             </table>
