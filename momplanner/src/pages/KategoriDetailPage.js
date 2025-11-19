@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { apiKategoriAdd, apiKategoriDelete } from "./services/api";
+import { apiKategoriAdd, apiKategoriDelete } from "../services/api";
 
 
 export default function KategoriDetailPage({ user, category, onBack }) {
