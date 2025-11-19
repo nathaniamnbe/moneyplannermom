@@ -125,24 +125,27 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     },
     formRow: {
       display: "flex",
-      flexDirection: "column", // input disusun vertikal
-      gap: "8px",
+      flexDirection: "column",
+      gap: "12px",
     },
+
     subRow: {
-      display: "grid",
-      gridTemplateColumns: "1fr auto", // jumlah + tombol
-      gap: "8px",
+      display: "flex",
+      flexDirection: "row",
+      gap: "12px",
       alignItems: "center",
     },
 
     input: {
-      width: "100%",
-      padding: "10px 12px",
-      borderRadius: "6px",
+      flex: 1,
+      minWidth: "0",
+      padding: "12px 14px",
+      borderRadius: "8px",
       border: "1px solid #ccc",
       fontSize: "14px",
       fontFamily: "inherit",
     },
+
     addBtn: {
       padding: "10px 16px",
       background: "#333",
