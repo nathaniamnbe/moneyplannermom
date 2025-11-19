@@ -9,6 +9,9 @@ export default function KategoriDetailPage({ user, category, onBack }) {
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState("");
 
+  // loading state
+  const [deletingIndex, setDeletingIndex] = useState(null);
+
   const [hoverBackBtn, setHoverBackBtn] = useState(false);
   const [hoverSubmitBtn, setHoverSubmitBtn] = useState(false);
 
@@ -81,23 +84,27 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     const target = items[index];
     if (!target) return;
 
-    // 1) Hapus di Google Sheets
+    // set loading untuk baris ini
+    setDeletingIndex(index);
+
     try {
+      // 1) Hapus di Google Sheets
       await apiKategoriDelete({
         category,
         desc: target.desc,
         amount: target.amount,
       });
+
+      // 2) Hapus di state + localStorage
+      const newItems = items.filter((_, i) => i !== index);
+      setItems(newItems);
+      saveAll(newItems);
     } catch (err) {
       console.error("Gagal hapus di Apps Script:", err);
-      // opsional: bisa alert, tapi kita tetap hapus lokal agar UX enak
-      // alert(err.message || "Gagal menghapus di Google Sheets.");
+      // kalau mau: alert(err.message || "Gagal menghapus di Google Sheets.");
+    } finally {
+      setDeletingIndex(null);
     }
-
-    // 2) Hapus di state + localStorage
-    const newItems = items.filter((_, i) => i !== index);
-    setItems(newItems);
-    saveAll(newItems);
   };
 
   const total = items.reduce(
@@ -318,10 +325,15 @@ export default function KategoriDetailPage({ user, category, onBack }) {
                     <td style={styles.td}>
                       <button
                         type="button"
-                        style={styles.deleteBtn}
+                        style={{
+                          ...styles.deleteBtn,
+                          opacity: deletingIndex === idx ? 0.6 : 1,
+                          cursor: deletingIndex === idx ? "default" : "pointer",
+                        }}
+                        disabled={deletingIndex === idx}
                         onClick={() => handleDeleteItem(idx)}
                       >
-                        Hapus
+                        {deletingIndex === idx ? "Menghapus..." : "Hapus"}
                       </button>
                     </td>
                   </tr>
