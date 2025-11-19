@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { apiKategoriAdd } from "../services/api";
+import { apiKategoriAdd, apiKategoriDelete } from "./services/api";
+
 
 export default function KategoriDetailPage({ user, category, onBack }) {
   const [items, setItems] = useState([]);
@@ -73,10 +74,27 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     setAmount("");
   };
 
-  // ---- Hapus satu baris data ----
-  const handleDeleteItem = (index) => {
+  // ---- Hapus satu baris data (web + Google Sheets) ----
+  const handleDeleteItem = async (index) => {
     if (!window.confirm("Hapus data ini?")) return;
 
+    const target = items[index];
+    if (!target) return;
+
+    // 1) Hapus di Google Sheets
+    try {
+      await apiKategoriDelete({
+        category,
+        desc: target.desc,
+        amount: target.amount,
+      });
+    } catch (err) {
+      console.error("Gagal hapus di Apps Script:", err);
+      // opsional: bisa alert, tapi kita tetap hapus lokal agar UX enak
+      // alert(err.message || "Gagal menghapus di Google Sheets.");
+    }
+
+    // 2) Hapus di state + localStorage
     const newItems = items.filter((_, i) => i !== index);
     setItems(newItems);
     saveAll(newItems);
