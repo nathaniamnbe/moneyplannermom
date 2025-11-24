@@ -1,3 +1,3 @@
 // Ganti string di bawah dengan Web App URL kamu
 export const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyel2Yjopk1jR5cz_6fDA5c9fE849iWjrpLl-_sn8xf4ZwV2r4Wyttoa2Wq0oHOClrM/exec";
+  "https://script.google.com/macros/s/AKfycbzQjCnb22WghTn6h0td9gvT6bvYSRicW7BiOs4B_Ra2OaSw1jJxBn2owYI86RNIf1mg/exec";
