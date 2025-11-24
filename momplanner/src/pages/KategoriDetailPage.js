@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { apiKategoriAdd, apiKategoriDelete } from "../services/api";
+import {
+  apiKategoriAdd,
+  apiKategoriDelete,
+  apiKategoriList,
+} from "../services/api";
+
 
 
 export default function KategoriDetailPage({ user, category, onBack }) {
@@ -15,19 +20,41 @@ export default function KategoriDetailPage({ user, category, onBack }) {
   const [hoverBackBtn, setHoverBackBtn] = useState(false);
   const [hoverSubmitBtn, setHoverSubmitBtn] = useState(false);
 
-  // ---- Load data dari localStorage saat buka halaman ----
+  // ---- Load data kategori: localStorage + Google Sheets ----
   useEffect(() => {
-    const raw = localStorage.getItem("MP_CATEGORY_DATA");
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed[category]) {
-          setItems(parsed[category]);
+    let ignore = false;
+
+    const load = async () => {
+      // 1) Load cepat dari localStorage (kalau ada)
+      const raw = localStorage.getItem("MP_CATEGORY_DATA");
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed[category]) {
+            setItems(parsed[category]);
+          }
+        } catch (e) {
+          console.error("Gagal parse MP_CATEGORY_DATA", e);
         }
-      } catch (e) {
-        console.error("Gagal parse MP_CATEGORY_DATA", e);
       }
-    }
+
+      // 2) Ambil data terbaru dari Apps Script (Sheets)
+      try {
+        const serverItems = await apiKategoriList(category);
+        if (!ignore) {
+          setItems(serverItems);
+          saveAll(serverItems); // sync ke localStorage
+        }
+      } catch (err) {
+        console.error("Gagal load kategori dari server:", err);
+      }
+    };
+
+    load();
+
+    return () => {
+      ignore = true;
+    };
   }, [category]);
 
   // ---- Simpan semua data kategori ke localStorage ----
