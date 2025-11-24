@@ -121,43 +121,26 @@ export async function apiKategoriDelete({ category, desc, amount }) {
 }
 
 export async function apiKategoriList(category) {
-  // ambil username & password dari localStorage (sama seperti login)
-  const rawUser = localStorage.getItem("MP_USER");
-  let username = "";
-  let password = "";
-
-  if (rawUser) {
-    try {
-      const u = JSON.parse(rawUser);
-      username = u.username || "";
-      password = u.password || "";
-    } catch (e) {
-      console.error("Gagal parse MP_USER", e);
-    }
+  const auth = JSON.parse(localStorage.getItem("MP_USER") || "{}");
+  if (!auth?.username || !auth?.password) {
+    throw new Error(
+      "Sesi login tidak lengkap. Silakan logout lalu login lagi."
+    );
   }
 
-  const res = await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      mode: "kategori_list",
-      kategori: category,
-      username,
-      password,
-    }),
+  // kirim sebagai form-encoded lewat helper postForm (sama seperti login/write/delete)
+  const { items } = await postForm({
+    mode: "kategori_list",
+    kategori: category,
+    username: auth.username,
+    password: auth.password,
   });
 
-  const data = await res.json();
-  if (!data.ok) {
-    throw new Error(data.error || "Gagal mengambil data kategori.");
-  }
-
   // mapping ke bentuk yang dipakai KategoriDetailPage: { desc, amount }
-  const items = (data.items || []).map((row) => ({
+  return (items || []).map((row) => ({
     desc: row.keterangan,
     amount: row.jumlah,
   }));
-
-  return items;
 }
+
 
