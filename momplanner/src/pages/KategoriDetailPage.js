@@ -7,25 +7,28 @@ import {
   apiKategoriList,
 } from "../services/api";
 
-
-
 export default function KategoriDetailPage({ user, category, onBack }) {
   const [items, setItems] = useState([]);
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState("");
 
-  // loading state
+  // loading fetch dari Google Sheets
+  const [loading, setLoading] = useState(true);
+
+  // loading delete
   const [deletingIndex, setDeletingIndex] = useState(null);
 
   const [hoverBackBtn, setHoverBackBtn] = useState(false);
   const [hoverSubmitBtn, setHoverSubmitBtn] = useState(false);
 
-  // ---- Load data kategori: localStorage + Google Sheets ----
+  // ---- Load data kategori ----
   useEffect(() => {
     let ignore = false;
 
     const load = async () => {
-      // 1) Load cepat dari localStorage (kalau ada)
+      setLoading(true);
+
+      // Load cepat dari localStorage
       const raw = localStorage.getItem("MP_CATEGORY_DATA");
       if (raw) {
         try {
@@ -33,31 +36,28 @@ export default function KategoriDetailPage({ user, category, onBack }) {
           if (parsed && parsed[category]) {
             setItems(parsed[category]);
           }
-        } catch (e) {
-          console.error("Gagal parse MP_CATEGORY_DATA", e);
-        }
+        } catch {}
       }
 
-      // 2) Ambil data terbaru dari Apps Script (Sheets)
+      // Load dari Google Sheets
       try {
         const serverItems = await apiKategoriList(category);
         if (!ignore) {
           setItems(serverItems);
-          saveAll(serverItems); // sync ke localStorage
+          saveAll(serverItems);
         }
       } catch (err) {
         console.error("Gagal load kategori dari server:", err);
+      } finally {
+        if (!ignore) setLoading(false);
       }
     };
 
     load();
-
-    return () => {
-      ignore = true;
-    };
+    return () => (ignore = true);
   }, [category]);
 
-  // ---- Simpan semua data kategori ke localStorage ----
+  // ---- Simpan semua item ke localStorage ----
   const saveAll = (newItems) => {
     const raw = localStorage.getItem("MP_CATEGORY_DATA");
     let all = {};
@@ -76,14 +76,13 @@ export default function KategoriDetailPage({ user, category, onBack }) {
   const handleAdd = async (e) => {
     e.preventDefault();
     const trimmedDesc = desc.trim();
-    const num = Number.parseFloat(String(amount).replace(/[^\d.-]/g, ""));
+    const num = Number(String(amount).replace(/[^\d.-]/g, ""));
 
     if (!trimmedDesc || isNaN(num)) {
       alert("Isi keterangan dan jumlah yang valid.");
       return;
     }
 
-    // simpan ke Google Sheets (tab kategori)
     try {
       await apiKategoriAdd({
         category,
@@ -92,43 +91,36 @@ export default function KategoriDetailPage({ user, category, onBack }) {
       });
     } catch (err) {
       console.error("Gagal kirim ke Apps Script:", err);
-      // kalau gagal pun tetap simpan lokal supaya user tidak hilang data
     }
 
     const newItem = { desc: trimmedDesc, amount: num };
-    const newItems = [...items, newItem];
-    setItems(newItems);
-    saveAll(newItems);
+    const updated = [...items, newItem];
+    setItems(updated);
+    saveAll(updated);
 
     setDesc("");
     setAmount("");
   };
 
-  // ---- Hapus satu baris data (web + Google Sheets) ----
+  // ---- Hapus data ----
   const handleDeleteItem = async (index) => {
     if (!window.confirm("Hapus data ini?")) return;
 
     const target = items[index];
-    if (!target) return;
-
-    // set loading untuk baris ini
     setDeletingIndex(index);
 
     try {
-      // 1) Hapus di Google Sheets
       await apiKategoriDelete({
         category,
         desc: target.desc,
         amount: target.amount,
       });
 
-      // 2) Hapus di state + localStorage
-      const newItems = items.filter((_, i) => i !== index);
-      setItems(newItems);
-      saveAll(newItems);
+      const updated = items.filter((_, i) => i !== index);
+      setItems(updated);
+      saveAll(updated);
     } catch (err) {
       console.error("Gagal hapus di Apps Script:", err);
-      // kalau mau: alert(err.message || "Gagal menghapus di Google Sheets.");
     } finally {
       setDeletingIndex(null);
     }
@@ -139,7 +131,7 @@ export default function KategoriDetailPage({ user, category, onBack }) {
     0
   );
 
-  // ---- STYLES ----
+  // --- STYLES (sama seperti sebelumnya) ---
   const styles = {
     container: {
       minHeight: "100vh",
@@ -191,42 +183,6 @@ export default function KategoriDetailPage({ user, category, onBack }) {
       color: "#333",
       margin: "0 0 16px 0",
     },
-
-    // --- form "Tambah Data" ---
-    formRow: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px",
-    },
-    subRow: {
-      display: "flex",
-      flexDirection: "row",
-      gap: "12px",
-      alignItems: "center",
-    },
-    input: {
-      flex: 1,
-      minWidth: "0",
-      padding: "12px 14px",
-      borderRadius: "8px",
-      border: "1px solid #ccc",
-      fontSize: "14px",
-      fontFamily: "inherit",
-    },
-    addBtn: {
-      padding: "12px 18px",
-      background: "#333",
-      color: "white",
-      borderRadius: "8px",
-      border: "none",
-      cursor: "pointer",
-      fontSize: "14px",
-      fontWeight: "500",
-      whiteSpace: "nowrap",
-      transition: "all 0.2s ease",
-    },
-
-    // --- tabel Data Tersimpan ---
     table: {
       width: "100%",
       borderCollapse: "collapse",
@@ -245,28 +201,16 @@ export default function KategoriDetailPage({ user, category, onBack }) {
       borderBottom: "1px solid #f0f0f0",
       padding: "10px 8px",
       fontSize: "14px",
-      color: "#333",
-      verticalAlign: "middle",
     },
     totalRow: {
       fontWeight: "bold",
       background: "#fafafa",
     },
-    deleteBtn: {
-      padding: "6px 10px",
-      borderRadius: "999px",
-      border: "1px solid #ffb3b3",
-      backgroundColor: "#ffe6e6",
-      color: "#d63031",
-      fontSize: "12px",
-      cursor: "pointer",
-      whiteSpace: "nowrap",
-    },
   };
 
   return (
     <div style={styles.container}>
-      {/* HEADER ala Input Debet */}
+      {/* HEADER */}
       <div style={styles.header}>
         <button
           style={{
@@ -280,41 +224,51 @@ export default function KategoriDetailPage({ user, category, onBack }) {
           ← Kembali
         </button>
         <h1 style={styles.title}>
-          {user?.name
-            ? `${user.name} - ${category}`
-            : `Detail Kategori: ${category}`}
+          {user?.name ? `${user.name} - ${category}` : category}
         </h1>
       </div>
 
+      {/* MAIN CONTENT */}
       <div style={styles.mainContent}>
-        {/* --- TAMBAH DATA --- */}
+        {/* FORM TAMBAH DATA */}
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Tambah Data</h2>
           <form onSubmit={handleAdd}>
-            <div style={styles.formRow}>
-              {/* Keterangan (full width) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <input
                 type="text"
                 placeholder="Keterangan..."
                 value={desc}
                 onChange={(e) => setDesc(e.target.value)}
-                style={styles.input}
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  border: "1px solid #ccc",
+                }}
               />
 
-              {/* Baris kedua: Jumlah + tombol Simpan */}
-              <div style={styles.subRow}>
+              <div style={{ display: "flex", gap: 12 }}>
                 <input
                   type="number"
                   placeholder="Jumlah..."
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  style={styles.input}
+                  style={{
+                    flex: 1,
+                    padding: 12,
+                    borderRadius: 8,
+                    border: "1px solid #ccc",
+                  }}
                 />
+
                 <button
                   type="submit"
                   style={{
-                    ...styles.addBtn,
-                    backgroundColor: hoverSubmitBtn ? "#222" : "#333",
+                    background: hoverSubmitBtn ? "#222" : "#333",
+                    padding: "12px 20px",
+                    color: "white",
+                    borderRadius: 8,
+                    border: "none",
                   }}
                   onMouseEnter={() => setHoverSubmitBtn(true)}
                   onMouseLeave={() => setHoverSubmitBtn(false)}
@@ -326,13 +280,14 @@ export default function KategoriDetailPage({ user, category, onBack }) {
           </form>
         </div>
 
-        {/* --- DATA TERSIMPAN --- */}
+        {/* DATA TERSIMPAN */}
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Data Tersimpan</h2>
-          {items.length === 0 ? (
-            <p style={{ color: "#999", fontSize: "14px" }}>
-              Belum ada data untuk kategori ini.
-            </p>
+
+          {loading ? (
+            <p style={{ color: "#777" }}>Memuat data...</p>
+          ) : items.length === 0 ? (
+            <p style={{ color: "#999" }}>Belum ada data untuk kategori ini.</p>
           ) : (
             <table style={styles.table}>
               <thead>
@@ -351,11 +306,13 @@ export default function KategoriDetailPage({ user, category, onBack }) {
                     </td>
                     <td style={styles.td}>
                       <button
-                        type="button"
                         style={{
-                          ...styles.deleteBtn,
-                          opacity: deletingIndex === idx ? 0.6 : 1,
+                          padding: "6px 12px",
+                          borderRadius: 20,
+                          border: "1px solid #faa",
+                          background: "#fee",
                           cursor: deletingIndex === idx ? "default" : "pointer",
+                          opacity: deletingIndex === idx ? 0.6 : 1,
                         }}
                         disabled={deletingIndex === idx}
                         onClick={() => handleDeleteItem(idx)}
@@ -365,11 +322,11 @@ export default function KategoriDetailPage({ user, category, onBack }) {
                     </td>
                   </tr>
                 ))}
+
+                {/* TOTAL */}
                 <tr style={styles.totalRow}>
                   <td style={styles.td}>Total</td>
-                  <td style={styles.td}>
-                    Rp {Number(total).toLocaleString("id-ID")}
-                  </td>
+                  <td style={styles.td}>Rp {total.toLocaleString("id-ID")}</td>
                   <td style={styles.td}></td>
                 </tr>
               </tbody>
